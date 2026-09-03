@@ -19,6 +19,7 @@ Write-up: <https://al-engr.com/dsf-vision-exp-single-gb300.html>
 - 10/10 vision + tool-call smoke; exact needle recall to 810K tokens; **0/128 repetition flags at C64**.
 - vLLM preview works (10/10 smoke) but its DSpark is ~35% slower at C1. SGLang is the pick.
 - EXL3 / NVFP4 / TensorRT-LLM deliberately not used — see the post.
+- **2026-09-03:** preview image has a tool-call history encoding bug (two halves of sglang #28035 out of sync) that breaks agent sessions after ~2 tool turns. Patched via a one-file bind-mount, included here; 8-hop Hermes gate passes.
 
 ## Files
 
@@ -32,6 +33,7 @@ Write-up: <https://al-engr.com/dsf-vision-exp-single-gb300.html>
 | `repaudit.py` | C64 natural-decode repetition audit, catid's rule (4 consecutive sentence repeats or repeated-8gram ≥ 0.20). |
 | `dspark_sps_tp1.json` | Single-GB300 DSpark steps-per-second table. **From [catid/dgx_station_benchmarks](https://github.com/catid/dgx_station_benchmarks/tree/main/deepseek-v4-flash-0731)** — not mine. |
 | `RESULTS.md` | Full ledger: every config tried, what lost and why. |
+| `patches/encoding_dsv4.py` | **Required with image `7ac467a5`.** Fixes a history tool-call encoding bug that makes multi-turn agent use degrade (`{"arguments": {...}}` nesting). Bind-mounted by `launch-dsfv.sh`. See `RESULTS.md` → *Tool-call regression*. |
 
 ## Quick start
 
@@ -43,6 +45,7 @@ python3 -m venv ~/hfenv && ~/hfenv/bin/pip install 'huggingface_hub[cli]'
   --local-dir ~/models/DeepSeek-V4-Flash-Vision-Exp/6821d6ad3681a4b137b066b76094fa82ebd0a380/original
 
 docker pull lmsysorg/sglang@sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6
+mkdir -p ~/ds4f-vision-exp && cp -r patches ~/ds4f-vision-exp/   # encoding_dsv4.py bind-mount (see RESULTS.md)
 echo "your-key" > ~/.glm_api_key
 cp dspark_sps_tp1.json ~/dspark_sps_tp1.json
 
@@ -61,9 +64,11 @@ sglang.launch_server --trust-remote-code --model-path /model --tp 1
   --speculative-algorithm DSPARK
   --swa-full-tokens-ratio 0.1
   --speculative-dspark-sps-table-path /dspark_sps_tp1.json
-  --reasoning-parser deepseek-v4 --tool-call-parser deepseek_v4
+  --reasoning-parser deepseek-v4 --tool-call-parser deepseekv4
   --served-model-name dsf-vision-exp --api-key ... --port 30003
 ```
+
+Plus `-v patches/encoding_dsv4.py:/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/encoding_dsv4.py:ro` — without it, multi-turn tool use degrades (see RESULTS.md).
 
 Things measured **slower** on one GB300 and therefore absent: `--chunked-prefill-size 4096`
 (TTFT doubles, C8/C16 −20%) and `--speculative-dspark-block-size 3` (accept 3.1/3 vs 3.7/5).

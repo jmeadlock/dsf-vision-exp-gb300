@@ -19,6 +19,7 @@ docker run -d --name "$NAME" --gpus all --ipc host --network host \
   --ulimit memlock=-1 --ulimit stack=67108864 --cap-add IPC_LOCK --cap-add SYS_NICE \
   -v "$MODEL":/model:ro \
   -v /home/milo/dspark_sps_tp1.json:/dspark_sps_tp1.json:ro \
+  -v /home/milo/ds4f-vision-exp/patches/encoding_dsv4.py:/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/encoding_dsv4.py:ro \
   -v $CACHE/root-cache:/root/.cache -v $CACHE/tilelang:/root/.tilelang -v $CACHE/triton:/root/.triton -v $CACHE/nv:/root/.nv \
   "$IMAGE" \
   python3 -m sglang.launch_server --trust-remote-code --model-path /model --tp 1 \
