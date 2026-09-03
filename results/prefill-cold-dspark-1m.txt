@@ -1,0 +1,5 @@
+PREFILL target=8000 prompt_tokens=6532 ttft_s=[0.27, 0.21, 0.21] tok_s=[24236, 31870, 31639] mean_tok_s=29248
+PREFILL target=32000 prompt_tokens=25978 ttft_s=[0.82, 0.81, 0.82] tok_s=[31568, 31938, 31911] mean_tok_s=31806
+PREFILL target=64000 prompt_tokens=51926 ttft_s=[1.49, 1.49, 1.49] tok_s=[34855, 34787, 34727] mean_tok_s=34790
+PREFILL target=128000 prompt_tokens=103841 ttft_s=[2.96, 3.23, 2.97] tok_s=[35042, 32150, 35000] mean_tok_s=34064
+PREFILL target=256000 prompt_tokens=207296 ttft_s=[6.72, 6.72, 6.73] tok_s=[30832, 30843, 30817] mean_tok_s=30831

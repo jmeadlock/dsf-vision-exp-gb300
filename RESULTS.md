@@ -31,7 +31,18 @@ Raw files on Station: `~/ds4f-vision-exp/results/bench-*.txt`, `smoke-*.txt`, `n
 24|- `bias_vl` image-token routing confirmed active in SGLang log (real vision path).
 25|- vLLM DSpark warns: drafter gets text-only inputs (no MM embeddings passed) — fine for text decode, unverified for image-heavy turns.
 26|
-27|## Memory (SGLang, mem 0.85, 1M ctx, DSpark)
+27|## Cold prefill (row 8, nonce-at-start, max_tokens=1, 3 samples)
+| prompt tok | TTFT s | tok/s |
+|---:|---:|---:|
+| 6,532 | 0.21 | 31,700 |
+| 25,978 | 0.82 | 31,800 |
+| 51,926 | 1.49 | 34,800 |
+| 103,841 | 3.0 | 34,100 |
+| 207,296 | 6.7 | 30,800 |
+| 415K (needle) | 16 | ~25,000 |
+| 810K (needle) | 45 | ~18,000 |
+
+## Memory (SGLang, mem 0.85, 1M ctx, DSpark)
 28|weights 148 GB + draft 9.9 GB; KV pool 6.06M tokens; 36 GB spare HBM; zero coherent spill. At 0.90: available_gpu_mem 23 GB, pool 7.5M.
 29|
 30|## Findings

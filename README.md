@@ -15,6 +15,7 @@ Write-up: <https://al-engr.com/dsf-vision-exp-single-gb300.html>
 
 - Native checkpoint, no quantization: 148 GB weights + 10 GB draft, ~23 GB HBM spare at `mem-fraction-static 0.90`.
 - DSpark = 2.75× at C1 over autoregressive. Keep the checkpoint default γ=5.
+- Cold prefill 31–35K tok/s flat through 200K prompt tokens (52K → 1.49 s TTFT); ~18K tok/s at 810K.
 - 10/10 vision + tool-call smoke; exact needle recall to 810K tokens; **0/128 repetition flags at C64**.
 - vLLM preview works (10/10 smoke) but its DSpark is ~35% slower at C1. SGLang is the pick.
 - EXL3 / NVFP4 / TensorRT-LLM deliberately not used — see the post.
@@ -27,6 +28,7 @@ Write-up: <https://al-engr.com/dsf-vision-exp-single-gb300.html>
 | `launch-dsfv-vllm.sh` | vLLM preview equivalent, for A/B. |
 | `dsfv_smoke.py` | 10-check protocol + vision smoke (OCR, shapes, chart, multi-image, tool_calls, reasoning split). Exit non-zero on any FAIL. |
 | `needle.py` | Long-context ladder 32K → 1M with random-word filler (defeats prefix cache), exact-match recall, post-probe. |
+| `prefill.py` | Cold-prefill probe: nonce at prompt start, `max_tokens=1`, `prompt_tokens / request time` at 8K–256K. |
 | `repaudit.py` | C64 natural-decode repetition audit, catid's rule (4 consecutive sentence repeats or repeated-8gram ≥ 0.20). |
 | `dspark_sps_tp1.json` | Single-GB300 DSpark steps-per-second table. **From [catid/dgx_station_benchmarks](https://github.com/catid/dgx_station_benchmarks/tree/main/deepseek-v4-flash-0731)** — not mine. |
 | `RESULTS.md` | Full ledger: every config tried, what lost and why. |
