@@ -1,0 +1,5 @@
+BENCH {"C": 1, "n": 3, "agg_tok_s": 337.3, "per_stream_tok_s": 375.5, "mean_ttft_s": 0.194, "ptok": 6994, "ctok_total": 3072, "wall_s": 9.1}
+BENCH {"C": 4, "n": 12, "agg_tok_s": 762.1, "per_stream_tok_s": 237.0, "mean_ttft_s": 0.335, "ptok": 6995, "ctok_total": 12288, "wall_s": 16.1}
+BENCH {"C": 8, "n": 24, "agg_tok_s": 1302.3, "per_stream_tok_s": 199.4, "mean_ttft_s": 0.474, "ptok": 6995, "ctok_total": 24576, "wall_s": 18.9}
+BENCH {"C": 16, "n": 48, "agg_tok_s": 1794.5, "per_stream_tok_s": 142.8, "mean_ttft_s": 0.715, "ptok": 6993, "ctok_total": 49152, "wall_s": 27.4}
+BENCH {"C": 32, "n": 96, "agg_tok_s": 2419.6, "per_stream_tok_s": 96.2, "mean_ttft_s": 1.159, "ptok": 6993, "ctok_total": 98304, "wall_s": 40.6}

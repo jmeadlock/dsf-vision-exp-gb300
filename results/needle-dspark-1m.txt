@@ -1,0 +1,5 @@
+RUNG target=32000 prompt_tokens=25892 ttft_total=3.3s prefill_tok_s=7767 recall=PASS post_probe=PASS content='BETA=f3f7a492 ALPHA=f68a27f6'
+RUNG target=128000 prompt_tokens=103799 ttft_total=3.1s prefill_tok_s=33190 recall=PASS post_probe=PASS content='BETA=328b5f9f ALPHA=b1acecfb'
+RUNG target=256000 prompt_tokens=207698 ttft_total=8.6s prefill_tok_s=24204 recall=PASS post_probe=PASS content='BETA=86b76399 ALPHA=364dd3ab'
+RUNG target=512000 prompt_tokens=415089 ttft_total=16.4s prefill_tok_s=25352 recall=PASS post_probe=PASS content='BETA=3f7d302f ALPHA=2395e62f'
+RUNG target=1000000 prompt_tokens=809969 ttft_total=45.1s prefill_tok_s=17970 recall=PASS post_probe=PASS content='BETA=937d472a ALPHA=42b60591'

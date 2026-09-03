@@ -1,0 +1,1 @@
+REPAUDIT C=64 N=128 flagged=0 rate=0.0% agg_out_tok_s=1865 mean_ptok=11929 mean_ctok=1164 finish=Counter({'stop': 127, 'length': 1}) worst_8gram=0.003

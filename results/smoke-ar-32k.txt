@@ -1,0 +1,11 @@
+PASS models — ['dsf-vision-exp']
+PASS text_answer — content='323' 0.3s
+PASS reasoning_separated — reasoning_len=66
+PASS tool_calls_parsed — [{"id": "call_3f60802610cd4b0aaeb56e35", "index": 0, "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Paris\"}"}}]
+PASS vision_ocr — content='ZEBRA 7391' prompt_tokens=195 10.1s
+PASS vision_tokens_present — prompt_tokens=195 (text-only fallback would be ~30)
+PASS vision_shapes — red square, blue circle, green triangle
+PASS vision_chart — B
+PASS multi_image — 2 images. the first one contains text.
+PASS post_probe — 0.2s
+SMOKE_RESULT PASS
