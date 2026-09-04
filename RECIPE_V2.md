@@ -52,7 +52,7 @@ python3 -m sglang.launch_server --trust-remote-code --model-path /model --tp 1 \
   --cuda-graph-max-bs-decode 64 --cuda-graph-bs-decode 1 2 4 8 16 32 64 \
   --max-running-requests 64 \
   --enable-metrics --host 0.0.0.0 --port 30003 \
-  --served-model-name dsf-vision-exp --api-key '<runtime secret>' \
+  --served-model-name dsf-vision-exp --api-key YOUR_KEY \
   --tool-call-parser deepseekv4 --reasoning-parser deepseek-v4 \
   --speculative-algorithm DSPARK \
   --swa-full-tokens-ratio 0.1
