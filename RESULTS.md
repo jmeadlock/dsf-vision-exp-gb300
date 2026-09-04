@@ -1,4 +1,6 @@
 # DS4F Vision-Exp on one GB300 — results ledger (2026-09-02/03)
+
+> **September 3–4 inner-loop follow-up:** [`INNER_LOOP_RETROSPECTIVE.md`](INNER_LOOP_RETROSPECTIVE.md) documents the 20-number campaign, its fail-closed harness changes, the neutral compact-mode ABA result, rejected SPS artifacts, rejected one-layer NextN override, and the final decision to promote no new recipe. The generated accounting is [`research/inner-loop-campaign-audit.md`](research/inner-loop-campaign-audit.md).
 Box: DGX Station GB300, 269 GB HBM, driver 595, CUDA 13.2. Model `deepseek-ai/DeepSeek-V4-Flash-Vision-Exp` @ `6821d6ad` (48 shards, 167.83 GB, native FP4 experts + FP8 dense + BF16 vision tower + DSpark head). All TP1.
 Workload (bench_dsf.py, same contract as catid 0731): ~7K prompt tokens, 1,024 out, temp 0, 3 reps/C, warm.
 ## Aggregate output tok/s

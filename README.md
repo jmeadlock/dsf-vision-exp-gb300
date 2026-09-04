@@ -7,6 +7,10 @@ on a **single GB300, TP=1, 1M context**, with SGLang.
 
 Write-up: <https://al-engr.com/dsf-vision-exp-single-gb300.html>
 
+Inner-loop retrospective: <https://al-engr.com/testing-the-inner-loop-on-dsfve.html>
+
+The September 3–4 inner-loop campaign is documented in [`INNER_LOOP_RETROSPECTIVE.md`](INNER_LOOP_RETROSPECTIVE.md). It closed with 10 admissible performance/baseline/control runs, 2 calibration-only runs, 8 blocked or aborted harness/preflight runs, and **no promoted recipe**. The generated public-safe accounting is in [`research/inner-loop-campaign-audit.md`](research/inner-loop-campaign-audit.md).
+
 ## TL;DR
 
 | | C1 | C4 | C8 | C16 | C32 |

@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+# Retain the campaign evidence locally. Public docs contain only the
+# generated, sanitized accounting and the reusable harness.
+inner-loop/runs/
+inner-loop/artifacts/
+inner-loop/queue/
+inner-loop/CONTROL
+inner-loop/window.json
+inner-loop/supervisor-state.json
+inner-loop/ledger.jsonl
+inner-loop/blog-notes.md
+research/raw-sglang-2026-09-03/
+research/source-scan-raw-2026-09-03.json
+research/next-run-sources.json

@@ -1,0 +1,690 @@
+{
+  "schema_version": 1,
+  "campaign": "testing the inner loop on DSFVE",
+  "campaign_status": "SUCCESS_PROCESS_NO_RECIPE_PROMOTION",
+  "model": "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
+  "image_digest": "sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6",
+  "sglang_source_revision": "40b3e15ddbd9a1067e181283d9900dd3f4d76ed7",
+  "primary_rows": [
+    8,
+    16,
+    32,
+    64
+  ],
+  "frozen_materiality_threshold_pct": 3.0,
+  "counts": {
+    "iteration_numbers": 20,
+    "valid_performance_evidence": 10,
+    "blocked_or_aborted": 8,
+    "calibration_only": 2,
+    "calibration_artifacts_generated": 2,
+    "candidate_recipe_promotions": 0
+  },
+  "headline_findings": {
+    "compact_verify_all_aba": {
+      "classification": "NEUTRAL_WITHIN_FROZEN_BAND",
+      "primary_geomean_delta_pct": 0.901,
+      "prefill_geomean_delta_pct": 0.217,
+      "sequence": [
+        "012-compact-verify-all-repeat-20260904T101015Z",
+        "013-static-no-sps-paired-control-20260904T103545Z",
+        "014-compact-verify-all-opposite-order-20260904T104943Z"
+      ]
+    },
+    "calibrated_sps_then_same_hour_removal": {
+      "iteration_10_vs_older_compact_primary_geomean_delta_pct": -4.327,
+      "iteration_12_table_off_vs_table_on_primary_geomean_delta_pct": 0.464,
+      "interpretation": "Removing the calibrated SPS table changed same-hour primary decode throughput by only +0.464%, so Iteration 10's older-reference loss cannot be causally assigned to the table. Iteration 1's unusually high C8 row did not reproduce. Neither compact scheduling variant is promotable from this evidence."
+    },
+    "one_nextn_layer_aba": {
+      "classification": "LOSS",
+      "primary_geomean_delta_pct": -4.093,
+      "prefill_geomean_delta_pct": -1.538,
+      "sequence": [
+        "014-compact-verify-all-opposite-order-20260904T104943Z",
+        "015-compact-nextn-one-20260904T115044Z",
+        "016-compact-nextn-checkpoint-reversal-20260904T120854Z"
+      ],
+      "retained_checkpoint_default_layers": 3
+    },
+    "additive_sps_calibration": {
+      "classification": "PASS_CALIBRATION",
+      "promotion_authorized": false,
+      "artifact_sha256": "af1e9a72ee517ff35207544508bd5deccbc0b01c8bf5ec598bbc6c617f56ec5c",
+      "cells": 132,
+      "fit_r_squared": 0.9996,
+      "fit_p95_relative_error": 0.02,
+      "fit_max_relative_error": 0.0487
+    },
+    "additive_sps_runtime": {
+      "classification": "LOSS",
+      "primary_geomean_delta_pct": -7.145,
+      "prefill_geomean_delta_pct": -0.833,
+      "worst_primary_row_delta_pct": -21.17,
+      "descriptive_two_run_midpoint_primary_pct": -4.861,
+      "descriptive_two_run_midpoint_status": "descriptive_only_iteration_18_contract_was_blocked"
+    }
+  },
+  "iterations": [
+    {
+      "iteration": 0,
+      "classification": "valid_baseline",
+      "verdict": "BASELINE",
+      "candidate": "incumbent static runtime",
+      "evidence_note": "Reproduced the incumbent with every correctness and teardown gate green.",
+      "started_at": "2026-09-04T00:47:36Z",
+      "finished_at": "2026-09-04T01:05:37.165881Z",
+      "decided_at": null,
+      "run_id": "000-incumbent-null-20260904T004736Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/000-incumbent-null-20260904T004736Z/results.json"
+      ],
+      "result_outcome": "BASELINE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 415.5,
+        "4": 884.8,
+        "8": 1142.7,
+        "16": 1848.3,
+        "32": 2361.0,
+        "64": 2984.9
+      },
+      "prefill_mean_tok_s": {
+        "8000": 34516.0,
+        "32000": 32667.0,
+        "64000": 35948.0,
+        "128000": 35894.0,
+        "256000": 31832.0
+      }
+    },
+    {
+      "iteration": 1,
+      "classification": "valid_performance",
+      "verdict": "INCONCLUSIVE",
+      "candidate": "compact verify-all",
+      "evidence_note": "Primary aggregate improved, but C16 regressed beyond the per-row guardrail; replication required.",
+      "started_at": "2026-09-04T01:26:52.990978Z",
+      "finished_at": "2026-09-04T01:35:55.447771Z",
+      "decided_at": "2026-09-04T01:39:41Z",
+      "run_id": "001-compact-verify-all-20260904T010827Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/001-compact-verify-all-20260904T010827Z/results.json",
+        "inner-loop/runs/001-compact-verify-all-20260904T010827Z/decision.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 360.1,
+        "4": 819.1,
+        "8": 1387.8,
+        "16": 1731.8,
+        "32": 2445.6,
+        "64": 3111.0
+      },
+      "prefill_mean_tok_s": {
+        "8000": 33381.0,
+        "32000": 32352.0,
+        "64000": 35605.0,
+        "128000": 35711.0,
+        "256000": 31804.0
+      },
+      "receipt_verdict": "INCONCLUSIVE",
+      "primary_geomean_delta_pct": 5.28,
+      "worst_primary_row_delta_pct": -6.303,
+      "prefill_geomean_delta_pct": -1.167,
+      "reference_run_id": "000-incumbent-null-20260904T004736Z"
+    },
+    {
+      "iteration": 2,
+      "classification": "valid_performance",
+      "verdict": "LOSS",
+      "candidate": "compact with inherited SPS table",
+      "evidence_note": "The inherited table crossed the frozen primary loss threshold.",
+      "started_at": "2026-09-04T01:47:04.535946Z",
+      "finished_at": "2026-09-04T01:56:06.587399Z",
+      "decided_at": "2026-09-04T01:58:03Z",
+      "run_id": "002-compact-current-sps-20260904T013941Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/002-compact-current-sps-20260904T013941Z/results.json",
+        "inner-loop/runs/002-compact-current-sps-20260904T013941Z/decision.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 416.1,
+        "4": 919.2,
+        "8": 1224.1,
+        "16": 1756.5,
+        "32": 2428.5,
+        "64": 3029.1
+      },
+      "prefill_mean_tok_s": {
+        "8000": 32594.0,
+        "32000": 32059.0,
+        "64000": 35465.0,
+        "128000": 35793.0,
+        "256000": 31744.0
+      },
+      "receipt_verdict": "LOSS",
+      "primary_geomean_delta_pct": -3.561,
+      "worst_primary_row_delta_pct": -11.796,
+      "prefill_geomean_delta_pct": -0.727,
+      "reference_run_id": "001-compact-verify-all-20260904T010827Z"
+    },
+    {
+      "iteration": 3,
+      "classification": "harness_blocked",
+      "verdict": "BLOCKED",
+      "candidate": "static SPS profile attempt",
+      "evidence_note": "Synthetic acceptance was active during semantic gates, so the runner rejected the evidence before profiling.",
+      "started_at": "2026-09-04T02:08:13.983249Z",
+      "finished_at": "2026-09-04T02:11:14.345719Z",
+      "decided_at": "2026-09-04T02:16:51Z",
+      "run_id": "003-sps-profile-static-20260904T020558Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/003-sps-profile-static-20260904T020558Z/results.json",
+        "inner-loop/runs/003-sps-profile-static-20260904T020558Z/decision.json"
+      ],
+      "result_outcome": "BLOCKED",
+      "result_blockers": [
+        "missing throughput rows: [1, 4, 8, 16, 32, 64]",
+        "missing prefill rows: [8000, 32000, 64000, 128000, 256000]",
+        "failed or missing gates: smoke, replay, opaque_identifiers, repetition, sps_profile"
+      ],
+      "all_reported_gates_pass": false,
+      "receipt_verdict": "BLOCKED"
+    },
+    {
+      "iteration": 4,
+      "classification": "administrative_abort",
+      "verdict": "ABORTED",
+      "candidate": "split SPS profile retry",
+      "evidence_note": "CONTROL remained on the Iteration 3 review hold; no container was created.",
+      "started_at": "2026-09-04T02:23:44.795900Z",
+      "finished_at": "2026-09-04T02:23:44.926691Z",
+      "decided_at": "2026-09-04T02:24:30Z",
+      "run_id": "004-sps-profile-static-20260904T022300Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/004-sps-profile-static-20260904T022300Z/results.json",
+        "inner-loop/runs/004-sps-profile-static-20260904T022300Z/decision.json"
+      ],
+      "result_outcome": "BLOCKED",
+      "result_blockers": [
+        "failed or missing gates: health, runtime_mode, patch, smoke, replay, opaque_identifiers, repetition, sps_profile"
+      ],
+      "all_reported_gates_pass": false,
+      "receipt_verdict": "ABORTED"
+    },
+    {
+      "iteration": 5,
+      "classification": "harness_blocked",
+      "verdict": "BLOCKED",
+      "candidate": "split SPS profile retry",
+      "evidence_note": "A literal redaction placeholder reached authenticated readiness and correctly received HTTP 401.",
+      "started_at": "2026-09-04T02:54:57.538909Z",
+      "finished_at": "2026-09-04T03:01:03.163803Z",
+      "decided_at": "2026-09-04T03:04:47Z",
+      "run_id": "005-sps-profile-static-20260904T025114Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/005-sps-profile-static-20260904T025114Z/results.json"
+      ],
+      "result_outcome": "BLOCKED",
+      "result_blockers": [
+        "failed or missing gates: health, runtime_mode, patch, smoke, replay, opaque_identifiers, repetition, tier0_health, profile_health, tier0_runtime_mode, tier0_patch, profile_hashes, sps_profile"
+      ],
+      "all_reported_gates_pass": false
+    },
+    {
+      "iteration": 6,
+      "classification": "harness_blocked",
+      "verdict": "BLOCKED",
+      "candidate": "split SPS profile with runtime receipt",
+      "evidence_note": "Tier-0 required a profile-only runtime field; the receipt predicate was wrong, not the model.",
+      "started_at": "2026-09-04T03:10:24.302622Z",
+      "finished_at": "2026-09-04T03:12:15.899739Z",
+      "decided_at": "2026-09-04T03:17:44Z",
+      "run_id": "006-sps-profile-static-20260904T030807Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/006-sps-profile-static-20260904T030807Z/results.json"
+      ],
+      "result_outcome": "BLOCKED",
+      "result_blockers": [
+        "failed or missing gates: runtime_mode, smoke, replay, opaque_identifiers, repetition, profile_health, tier0_runtime_mode, profile_hashes, sps_profile"
+      ],
+      "all_reported_gates_pass": false
+    },
+    {
+      "iteration": 7,
+      "classification": "harness_blocked",
+      "verdict": "BLOCKED",
+      "candidate": "split SPS profile with stock profiler",
+      "evidence_note": "Ordinary Tier-0 passed, but the stock profiler could not authenticate; profiling remained empty.",
+      "started_at": "2026-09-04T03:21:03.611472Z",
+      "finished_at": "2026-09-04T03:27:29.883210Z",
+      "decided_at": "2026-09-04T03:33:44Z",
+      "run_id": "007-sps-profile-static-20260904T031905Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/007-sps-profile-static-20260904T031905Z/results.json"
+      ],
+      "result_outcome": "BLOCKED",
+      "result_blockers": [
+        "failed or missing gates: sps_profile"
+      ],
+      "all_reported_gates_pass": false
+    },
+    {
+      "iteration": 8,
+      "classification": "calibration_only",
+      "verdict": "PASS_CALIBRATION",
+      "candidate": "isolated static SPS calibration",
+      "evidence_note": "Produced a valid immutable measurement artifact after ordinary correctness and isolated loopback profiling.",
+      "started_at": "2026-09-04T03:37:07.111213Z",
+      "finished_at": "2026-09-04T03:50:50.544048Z",
+      "decided_at": "2026-09-04T09:18:12Z",
+      "run_id": "008-sps-profile-static-20260904T033459Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/008-sps-profile-static-20260904T033459Z/results.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true
+    },
+    {
+      "iteration": 9,
+      "classification": "local_preflight_blocked",
+      "verdict": "BLOCKED",
+      "candidate": "calibrated SPS staged candidate",
+      "evidence_note": "macOS Bash 3.2 lacks readarray; dispatch stopped before SSH or Station side effects.",
+      "started_at": null,
+      "finished_at": "2026-09-04T09:23:01Z",
+      "decided_at": null,
+      "run_id": "009-compact-calibrated-sps-20260904T091938Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/ledger.jsonl"
+      ]
+    },
+    {
+      "iteration": 10,
+      "classification": "valid_performance",
+      "verdict": "LOSS",
+      "candidate": "compact with calibrated SPS table",
+      "evidence_note": "The frozen comparison crossed the primary loss threshold; the calibration artifact was not promoted.",
+      "started_at": "2026-09-04T09:25:41.510539Z",
+      "finished_at": "2026-09-04T09:33:58.132610Z",
+      "decided_at": "2026-09-04T09:43:55Z",
+      "run_id": "010-compact-calibrated-sps-20260904T092301Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/010-compact-calibrated-sps-20260904T092301Z/results.json",
+        "inner-loop/runs/010-compact-calibrated-sps-20260904T092301Z/decision.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 429.4,
+        "4": 802.3,
+        "8": 1232.0,
+        "16": 1772.9,
+        "32": 2384.7,
+        "64": 2941.3
+      },
+      "prefill_mean_tok_s": {
+        "8000": 34194.0,
+        "32000": 32559.0,
+        "64000": 35792.0,
+        "128000": 35816.0,
+        "256000": 31814.0
+      },
+      "receipt_verdict": "LOSS",
+      "primary_geomean_delta_pct": -4.327,
+      "worst_primary_row_delta_pct": -11.226,
+      "prefill_geomean_delta_pct": 0.782,
+      "reference_run_id": "001-compact-verify-all-20260904T010827Z"
+    },
+    {
+      "iteration": 11,
+      "classification": "harness_blocked",
+      "verdict": "BLOCKED",
+      "candidate": "compact verify-all control",
+      "evidence_note": "The contract placed container at the wrong path and failed before Docker; local schema validation was added.",
+      "started_at": "2026-09-04T09:51:56.807353Z",
+      "finished_at": "2026-09-04T09:51:56.951641Z",
+      "decided_at": "2026-09-04T10:06:34Z",
+      "run_id": "011-compact-verify-all-repeat-20260904T095010Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/011-compact-verify-all-repeat-20260904T095010Z/results.json"
+      ],
+      "result_outcome": "BLOCKED",
+      "result_blockers": [
+        "failed or missing gates: preflight, health, runtime_mode, patch, smoke, replay, opaque_identifiers, repetition, gpu_errors, receipt_sanitize, clean_stop, runner_hash"
+      ],
+      "all_reported_gates_pass": false
+    },
+    {
+      "iteration": 12,
+      "classification": "valid_performance",
+      "verdict": "INCONCLUSIVE",
+      "candidate": "compact verify-all repeat",
+      "evidence_note": "Same-hour SPS removal was effectively flat and the earlier C8 uplift did not reproduce.",
+      "started_at": "2026-09-04T10:12:53.989724Z",
+      "finished_at": "2026-09-04T10:21:56.487712Z",
+      "decided_at": "2026-09-04T10:23:46Z",
+      "run_id": "012-compact-verify-all-repeat-20260904T101015Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/012-compact-verify-all-repeat-20260904T101015Z/results.json",
+        "inner-loop/runs/012-compact-verify-all-repeat-20260904T101015Z/decision.json",
+        "inner-loop/runs/012-compact-verify-all-repeat-20260904T101015Z/paired-comparisons.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 365.2,
+        "4": 931.2,
+        "8": 1182.1,
+        "16": 1857.1,
+        "32": 2376.8,
+        "64": 2991.1
+      },
+      "prefill_mean_tok_s": {
+        "8000": 33455.0,
+        "32000": 32466.0,
+        "64000": 35643.0,
+        "128000": 35865.0,
+        "256000": 31837.0
+      },
+      "receipt_verdict": "INCONCLUSIVE",
+      "primary_geomean_delta_pct": 0.464,
+      "worst_primary_row_delta_pct": -4.05,
+      "prefill_geomean_delta_pct": -0.534,
+      "reference_run_id": "010-compact-calibrated-sps-20260904T092301Z"
+    },
+    {
+      "iteration": 13,
+      "classification": "valid_control",
+      "verdict": "INCONCLUSIVE",
+      "candidate": "static no-SPS paired control",
+      "evidence_note": "Static and compact were effectively tied in the adjacent pair.",
+      "started_at": "2026-09-04T10:37:32.513424Z",
+      "finished_at": "2026-09-04T10:46:42.397109Z",
+      "decided_at": "2026-09-04T10:47:51Z",
+      "run_id": "013-static-no-sps-paired-control-20260904T103545Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/013-static-no-sps-paired-control-20260904T103545Z/results.json",
+        "inner-loop/runs/013-static-no-sps-paired-control-20260904T103545Z/decision.json",
+        "inner-loop/runs/013-static-no-sps-paired-control-20260904T103545Z/paired-comparisons.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 329.2,
+        "4": 748.7,
+        "8": 1260.7,
+        "16": 1786.0,
+        "32": 2383.6,
+        "64": 2985.4
+      },
+      "prefill_mean_tok_s": {
+        "8000": 33935.0,
+        "32000": 32561.0,
+        "64000": 35669.0,
+        "128000": 35662.0,
+        "256000": 31650.0
+      },
+      "receipt_verdict": "INCONCLUSIVE",
+      "primary_geomean_delta_pct": 0.659,
+      "worst_primary_row_delta_pct": -3.829,
+      "prefill_geomean_delta_pct": 0.127,
+      "reference_run_id": "012-compact-verify-all-repeat-20260904T101015Z"
+    },
+    {
+      "iteration": 14,
+      "classification": "valid_control",
+      "verdict": "INCONCLUSIVE",
+      "candidate": "compact verify-all opposite-order control",
+      "evidence_note": "The compact-static-compact ABA bracket closed compact verify-all as neutral.",
+      "started_at": "2026-09-04T10:51:09.487015Z",
+      "finished_at": "2026-09-04T11:00:07.176257Z",
+      "decided_at": "2026-09-04T11:11:43Z",
+      "run_id": "014-compact-verify-all-opposite-order-20260904T104943Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/014-compact-verify-all-opposite-order-20260904T104943Z/results.json",
+        "inner-loop/runs/014-compact-verify-all-opposite-order-20260904T104943Z/decision.json",
+        "inner-loop/runs/014-compact-verify-all-opposite-order-20260904T104943Z/paired-comparisons.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 391.2,
+        "4": 952.8,
+        "8": 1323.3,
+        "16": 1847.9,
+        "32": 2421.3,
+        "64": 2984.9
+      },
+      "prefill_mean_tok_s": {
+        "8000": 34340.0,
+        "32000": 32706.0,
+        "64000": 35765.0,
+        "128000": 35814.0,
+        "256000": 31801.0
+      },
+      "receipt_verdict": "INCONCLUSIVE",
+      "primary_geomean_delta_pct": 2.482,
+      "worst_primary_row_delta_pct": -0.017,
+      "prefill_geomean_delta_pct": 0.562,
+      "reference_run_id": "013-static-no-sps-paired-control-20260904T103545Z"
+    },
+    {
+      "iteration": 15,
+      "classification": "valid_performance",
+      "verdict": "LOSS",
+      "candidate": "compact with one NextN layer",
+      "evidence_note": "The runtime-confirmed one-layer override crossed the frozen primary loss threshold.",
+      "started_at": "2026-09-04T11:52:48.773857Z",
+      "finished_at": "2026-09-04T12:02:24.877671Z",
+      "decided_at": "2026-09-04T12:05:19Z",
+      "run_id": "015-compact-nextn-one-20260904T115044Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/015-compact-nextn-one-20260904T115044Z/results.json",
+        "inner-loop/runs/015-compact-nextn-one-20260904T115044Z/decision.json",
+        "inner-loop/runs/015-compact-nextn-one-20260904T115044Z/paired-comparisons.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 403.8,
+        "4": 907.5,
+        "8": 1222.0,
+        "16": 1718.6,
+        "32": 2304.9,
+        "64": 3011.6
+      },
+      "prefill_mean_tok_s": {
+        "8000": 32772.0,
+        "32000": 32100.0,
+        "64000": 35361.0,
+        "128000": 35789.0,
+        "256000": 31724.0
+      },
+      "receipt_verdict": "LOSS",
+      "primary_geomean_delta_pct": -4.7,
+      "worst_primary_row_delta_pct": -7.655,
+      "prefill_geomean_delta_pct": -1.586,
+      "reference_run_id": "014-compact-verify-all-opposite-order-20260904T104943Z"
+    },
+    {
+      "iteration": 16,
+      "classification": "valid_control",
+      "verdict": "WIN_CONTROL",
+      "candidate": "checkpoint-default NextN reversal",
+      "evidence_note": "The immediate reversal beat one layer and completed a default-one-default causal bracket.",
+      "started_at": "2026-09-04T12:10:30.532731Z",
+      "finished_at": "2026-09-04T12:19:34.705255Z",
+      "decided_at": "2026-09-04T12:23:06Z",
+      "run_id": "016-compact-nextn-checkpoint-reversal-20260904T120854Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/016-compact-nextn-checkpoint-reversal-20260904T120854Z/results.json",
+        "inner-loop/runs/016-compact-nextn-checkpoint-reversal-20260904T120854Z/decision.json",
+        "inner-loop/runs/016-compact-nextn-checkpoint-reversal-20260904T120854Z/paired-comparisons.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 357.3,
+        "4": 850.7,
+        "8": 1302.8,
+        "16": 1779.2,
+        "32": 2405.6,
+        "64": 3012.6
+      },
+      "prefill_mean_tok_s": {
+        "8000": 34025.0,
+        "32000": 32622.0,
+        "64000": 35831.0,
+        "128000": 35969.0,
+        "256000": 31825.0
+      },
+      "receipt_verdict": "WIN",
+      "primary_geomean_delta_pct": 3.608,
+      "worst_primary_row_delta_pct": 0.033,
+      "prefill_geomean_delta_pct": 1.512,
+      "reference_run_id": "015-compact-nextn-one-20260904T115044Z"
+    },
+    {
+      "iteration": 17,
+      "classification": "calibration_only",
+      "verdict": "PASS_CALIBRATION",
+      "candidate": "additive SPS calibration",
+      "evidence_note": "All 132 requested cells and fit gates passed; the artifact remained measurement-only.",
+      "started_at": "2026-09-04T12:45:43.206249Z",
+      "finished_at": "2026-09-04T13:27:45.699295Z",
+      "decided_at": "2026-09-04T13:31:14Z",
+      "run_id": "017-sps-profile-additive-20260904T124342Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/017-sps-profile-additive-20260904T124342Z/results.json",
+        "inner-loop/runs/017-sps-profile-additive-20260904T124342Z/decision.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true
+    },
+    {
+      "iteration": 18,
+      "classification": "harness_blocked",
+      "verdict": "BLOCKED",
+      "candidate": "compact with additive SPS table",
+      "evidence_note": "The workload completed, but decision_rule was not the evaluator's winner_rule; raw metrics are inadmissible as a verdict.",
+      "started_at": "2026-09-04T13:37:57.471667Z",
+      "finished_at": "2026-09-04T13:46:16.764778Z",
+      "decided_at": "2026-09-04T13:49:42Z",
+      "run_id": "018-compact-additive-sps-20260904T133248Z",
+      "accepted_as_performance_evidence": false,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/018-compact-additive-sps-20260904T133248Z/results.json",
+        "inner-loop/runs/018-compact-additive-sps-20260904T133248Z/decision.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "receipt_verdict": "BLOCKED"
+    },
+    {
+      "iteration": 19,
+      "classification": "valid_performance",
+      "verdict": "LOSS",
+      "candidate": "corrected additive SPS runtime",
+      "evidence_note": "The corrected frozen contract crossed the primary loss threshold with all correctness gates green.",
+      "started_at": "2026-09-04T13:51:34.220465Z",
+      "finished_at": "2026-09-04T14:00:44.404464Z",
+      "decided_at": "2026-09-04T14:01:03Z",
+      "run_id": "019-compact-additive-sps-rerun-20260904T135038Z",
+      "accepted_as_performance_evidence": true,
+      "promotion_authorized": false,
+      "receipt_paths": [
+        "inner-loop/runs/019-compact-additive-sps-rerun-20260904T135038Z/results.json",
+        "inner-loop/runs/019-compact-additive-sps-rerun-20260904T135038Z/decision.json",
+        "inner-loop/runs/019-compact-additive-sps-rerun-20260904T135038Z/paired-comparisons.json"
+      ],
+      "result_outcome": "COMPLETE",
+      "result_blockers": [],
+      "all_reported_gates_pass": true,
+      "throughput_tok_s": {
+        "1": 414.5,
+        "4": 985.3,
+        "8": 1027.0,
+        "16": 1757.0,
+        "32": 2314.6,
+        "64": 2990.0
+      },
+      "prefill_mean_tok_s": {
+        "8000": 33203.0,
+        "32000": 32427.0,
+        "64000": 35587.0,
+        "128000": 35864.0,
+        "256000": 31773.0
+      },
+      "receipt_verdict": "LOSS",
+      "primary_geomean_delta_pct": -7.145,
+      "worst_primary_row_delta_pct": -21.17,
+      "prefill_geomean_delta_pct": -0.833,
+      "reference_run_id": "016-compact-nextn-checkpoint-reversal-20260904T120854Z"
+    }
+  ],
+  "production": {
+    "restored": false,
+    "held_container": "dsfv-dspark-prod-hold-20260903-1900",
+    "final_verified_at": "2026-09-04T14:54:59Z",
+    "final_state": {
+      "experiment_containers_running": false,
+      "port_30003_online": false,
+      "gpu_busy": false,
+      "experiment_lock_held": false,
+      "held_production_running": false
+    }
+  }
+}

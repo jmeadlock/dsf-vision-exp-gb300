@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": 1,
+      "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp/raw/main/config.json",
+      "title": "DeepSeek-V4-Flash-Vision-Exp config.json",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 2,
+      "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp/discussions/11",
+      "title": "DSpark acceptance rate discussion #11",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 3,
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/40b3e15ddbd9a1067e181283d9900dd3f4d76ed7/python/sglang/srt/server_args.py",
+      "title": "SGLang pinned server_args.py",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 4,
+      "url": "https://raw.githubusercontent.com/sgl-project/sglang/40b3e15ddbd9a1067e181283d9900dd3f4d76ed7/python/sglang/srt/configs/model_config.py",
+      "title": "SGLang pinned model_config.py",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 5,
+      "url": "https://github.com/sgl-project/sglang/pull/37253",
+      "title": "SGLang PR #37253",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 6,
+      "url": "https://github.com/sgl-project/sglang/pull/37665",
+      "title": "SGLang PR #37665",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 7,
+      "url": "https://github.com/sgl-project/sglang/pull/37492",
+      "title": "SGLang PR #37492",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 8,
+      "url": "https://github.com/sgl-project/sglang/pull/37737",
+      "title": "SGLang PR #37737",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 9,
+      "url": "https://github.com/sgl-project/sglang/pull/37301",
+      "title": "SGLang PR #37301",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 10,
+      "url": "https://x.com/plotarmordev",
+      "title": "",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 11,
+      "url": "https://x.com/plotarmordev/status/2095861045202207177",
+      "title": "",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 12,
+      "url": "https://x.com/plotarmordev/status/2095486847262822827",
+      "title": "",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 13,
+      "url": "https://x.com/plotarmordev/status/2094429218843377942",
+      "title": "",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 14,
+      "url": "https://x.com/plotarmordev/status/2093615565357318292",
+      "title": "",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 15,
+      "url": "https://al-engr.com/designing-an-inference-recipe-generator.html",
+      "title": "Designing an inference recipe generator",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 16,
+      "url": "https://github.com/jmeadlock/dsf-vision-exp-gb300",
+      "title": "DSF Vision-Exp single-GB300 recipe and harness",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 17,
+      "url": "https://github.com/sgl-project/sglang/issues/34959",
+      "title": "SGLang issue #34959: DSpark identifier corruption",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 18,
+      "url": "https://github.com/sgl-project/sglang/pull/28035",
+      "title": "SGLang PR #28035: normalize tool call arguments",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 19,
+      "url": "https://al-engr.com/dsf-vision-exp-single-gb300.html",
+      "title": "DSF Vision-Exp on one GB300",
+      "accessed": "2026-09-04"
+    },
+    {
+      "id": 20,
+      "url": "https://github.com/sgl-project/sglang/pull/30261",
+      "title": "SGLang PR #30261",
+      "accessed": "2026-09-04"
+    }
+  ]
+}
