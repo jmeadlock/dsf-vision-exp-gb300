@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "recipe_version": "v2",
+  "name": "DSFVE single-GB300 Recipe v2",
+  "status": "current",
+  "derived_from_run_id": "013-static-no-sps-paired-control-20260904T103545Z",
+  "supporting_reversal_run_id": "016-compact-nextn-checkpoint-reversal-20260904T120854Z",
+  "configuration": {
+    "model": "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
+    "model_revision": "6821d6ad3681a4b137b066b76094fa82ebd0a380",
+    "image": "lmsysorg/sglang@sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6",
+    "image_digest": "sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6",
+    "sglang_source_revision": "40b3e15ddbd9a1067e181283d9900dd3f4d76ed7",
+    "hardware": "one NVIDIA GB300",
+    "tensor_parallelism": 1,
+    "context_length": 1048576,
+    "mem_fraction_static": 0.9,
+    "speculative_algorithm": "DSPARK",
+    "dspark_block_size": 5,
+    "dspark_block_size_source": "checkpoint/runtime default; no --speculative-dspark-block-size override",
+    "num_nextn_predict_layers": 3,
+    "num_nextn_predict_layers_source": "checkpoint default; no --json-model-override-args",
+    "ragged_verify_mode": "static",
+    "sps_table": "none",
+    "swa_full_tokens_ratio": 0.1,
+    "chunked_prefill_size": 8192,
+    "cuda_graph_max_bs_decode": 64,
+    "cuda_graph_bs_decode": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "max_running_requests": 64,
+    "tool_call_parser": "deepseekv4",
+    "reasoning_parser": "deepseek-v4",
+    "served_model_name": "dsf-vision-exp",
+    "port": 30003,
+    "api_authentication": "required; secret value is read at runtime and is not part of public artifacts",
+    "dsml_encoding_patch": {
+      "required": true,
+      "container_path": "/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/encoding_dsv4.py",
+      "repo_path": "patches/encoding_dsv4.py"
+    }
+  },
+  "launch_contract": {
+    "script": "launch-dsfv.sh",
+    "default_invocation": "./launch-dsfv.sh dspark",
+    "do_not_launch_from_script_during_validation": true,
+    "environment": {
+      "SGLANG_RAGGED_VERIFY_MODE": "static"
+    },
+    "required_flags": {
+      "--trust-remote-code": true,
+      "--model-path": "/model",
+      "--tp": 1,
+      "--context-length": 1048576,
+      "--mem-fraction-static": 0.9,
+      "--speculative-algorithm": "DSPARK",
+      "--swa-full-tokens-ratio": 0.1,
+      "--chunked-prefill-size": 8192,
+      "--cuda-graph-max-bs-decode": 64,
+      "--cuda-graph-bs-decode": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "--max-running-requests": 64,
+      "--tool-call-parser": "deepseekv4",
+      "--reasoning-parser": "deepseek-v4",
+      "--served-model-name": "dsf-vision-exp"
+    },
+    "forbidden_default_flags_or_mounts": [
+      "--speculative-dspark-sps-table-path",
+      "--json-model-override-args",
+      "/dspark_sps_tp1.json"
+    ]
+  },
+  "measurements": {
+    "workload": {
+      "prompt_tokens_approx": 7000,
+      "output_tokens": 1024,
+      "temperature": 0,
+      "reasoning_effort": "low"
+    },
+    "throughput": [
+      {
+        "concurrency": 1,
+        "aggregate_output_tok_s": 329.2,
+        "mean_ttft_s": 0.191,
+        "samples": 6
+      },
+      {
+        "concurrency": 4,
+        "aggregate_output_tok_s": 748.7,
+        "mean_ttft_s": 0.33,
+        "samples": 12
+      },
+      {
+        "concurrency": 8,
+        "aggregate_output_tok_s": 1260.7,
+        "mean_ttft_s": 0.474,
+        "samples": 24
+      },
+      {
+        "concurrency": 16,
+        "aggregate_output_tok_s": 1786.0,
+        "mean_ttft_s": 0.733,
+        "samples": 48
+      },
+      {
+        "concurrency": 32,
+        "aggregate_output_tok_s": 2383.6,
+        "mean_ttft_s": 1.162,
+        "samples": 96
+      },
+      {
+        "concurrency": 64,
+        "aggregate_output_tok_s": 2985.4,
+        "mean_ttft_s": 2.505,
+        "samples": 192
+      }
+    ],
+    "prefill": [
+      {
+        "target_tokens": 8000,
+        "prompt_tokens": 6479,
+        "mean_tok_s": 33935.0,
+        "ttft_s": [
+          0.2,
+          0.19,
+          0.19
+        ],
+        "tok_s": [
+          32507,
+          34301,
+          34997
+        ]
+      },
+      {
+        "target_tokens": 32000,
+        "prompt_tokens": 25905,
+        "mean_tok_s": 32561.0,
+        "ttft_s": [
+          0.81,
+          0.8,
+          0.79
+        ],
+        "tok_s": [
+          31945,
+          32761,
+          32978
+        ]
+      },
+      {
+        "target_tokens": 64000,
+        "prompt_tokens": 52011,
+        "mean_tok_s": 35669.0,
+        "ttft_s": [
+          1.45,
+          1.46,
+          1.45
+        ],
+        "tok_s": [
+          35759,
+          35542,
+          35705
+        ]
+      },
+      {
+        "target_tokens": 128000,
+        "prompt_tokens": 103669,
+        "mean_tok_s": 35662.0,
+        "ttft_s": [
+          2.91,
+          2.91,
+          2.92
+        ],
+        "tok_s": [
+          35682,
+          35733,
+          35572
+        ]
+      },
+      {
+        "target_tokens": 256000,
+        "prompt_tokens": 207405,
+        "mean_tok_s": 31650.0,
+        "ttft_s": [
+          6.58,
+          6.55,
+          6.54
+        ],
+        "tok_s": [
+          31534,
+          31697,
+          31719
+        ]
+      }
+    ],
+    "claim_boundary": {
+      "classification": "equivalent_performance_inside_frozen_band_not_speed_promotion",
+      "primary_rows": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "primary_c8_c64_geomean_tok_s": 2000.701,
+      "vs_iteration_0_delta_pct": 1.859,
+      "materiality_band_pct": 3.0,
+      "plain_language": "Recipe v2 is operationally simpler and better proven; it is not a measured speed promotion."
+    }
+  },
+  "evidence": {
+    "public_safe_evidence": "research/recipe-v2-evidence.json",
+    "campaign_audit": "research/inner-loop-campaign-audit.json",
+    "do_not_retry": "research/do-not-retry.md"
+  }
+}

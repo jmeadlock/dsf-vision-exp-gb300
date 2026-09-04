@@ -1,11 +1,17 @@
-# DS4FVis-exp inner loop
+# DSFVE inner loop
 
 A no-Kanban, fail-closed experiment loop for one GB300. The filesystem is the handoff and audit trail.
 
 ## Campaign status
 
-The September 3–4 campaign is closed with `CONTROL=STOP`. It used 20 iteration numbers: 10 valid performance/baseline/control runs, 2 calibration-only runs, and 8 blocked or aborted harness/preflight runs. No candidate recipe was promoted. Production remains preserved and stopped pending a separate restore instruction.
+The September 3-4 campaign is closed with `CONTROL=STOP`. It used 20 iteration numbers: 10 valid performance/baseline/control runs, 2 calibration-only runs, and 8 blocked or aborted harness/preflight runs. No candidate earned a measured speed promotion.
 
+The outer-loop repository update selected **Recipe v2** from Iteration 13: static ragged verification, no SPS table, checkpoint-default NextN, DSpark gamma/default block size 5, 1M context, memory 0.90, SWA 0.1, chunked prefill 8192, and the DSML encoding patch. Iteration 16 supplies the default-NextN reversal evidence. Recipe v2 is operationally simpler and better proven, with equivalent throughput inside the frozen ±3% band.
+
+- Current recipe: [`../RECIPE_V2.md`](../RECIPE_V2.md)
+- Machine-readable recipe: [`../recipe-v2.json`](../recipe-v2.json)
+- Recipe v2 evidence: [`../research/recipe-v2-evidence.json`](../research/recipe-v2-evidence.json)
+- Do-not-retry ledger: [`../research/do-not-retry.md`](../research/do-not-retry.md)
 - Narrative retrospective: [`../INNER_LOOP_RETROSPECTIVE.md`](../INNER_LOOP_RETROSPECTIVE.md)
 - Generated receipt audit: [`../research/inner-loop-campaign-audit.md`](../research/inner-loop-campaign-audit.md)
 - Audit source: [`../research/inner-loop-campaign-audit.json`](../research/inner-loop-campaign-audit.json)
@@ -25,8 +31,8 @@ Each iteration freezes its JSON contract into `runs/<run-id>/contract.json` befo
 ## Layout
 
 - `queue/` — frozen current contract and proposed later deltas.
-- `runs/` — immutable receipts copied back from the Station.
-- `ledger.jsonl` — append-only lifecycle and decision events.
+- `runs/` — immutable local receipts copied back from the Station; gitignored.
+- `ledger.jsonl` — append-only lifecycle and decision events; gitignored.
 - `scripts/run_remote_iteration.sh` — Station executor under `flock`.
 - `scripts/summarize_iteration.py` — fail-closed result parser.
 - `scripts/replay_gate.py` — six replayed DSML tool turns.
@@ -34,4 +40,12 @@ Each iteration freezes its JSON contract into `runs/<run-id>/contract.json` befo
 
 ## Iteration zero
 
-Starts the exact held production container, verifies its immutable receipt, exercises protocol, real vision, tool history, concurrent identifier fidelity, throughput C1/C4/C8/C16/C32/C64, cold prefill 8K–256K, and C64 repetition, then stops it again.
+Starts the exact held production container, verifies its immutable receipt, exercises protocol, real vision, tool history, concurrent identifier fidelity, throughput C1/C4/C8/C16/C32/C64, cold prefill 8K-256K, and C64 repetition, then stops it again.
+
+## Recipe-specific reproducibility
+
+`research/build_recipe_v2.py` derives the public-safe Recipe v2 JSON artifacts from the ignored local receipts when those receipts are present. It also checks that `launch-dsfv.sh` still defaults to the digest-pinned static/no-SPS/checkpoint-NextN launch without running Docker:
+
+```bash
+python3 research/build_recipe_v2.py --check
+```
