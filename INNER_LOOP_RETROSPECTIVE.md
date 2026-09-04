@@ -2,13 +2,13 @@
 
 *Overnight campaign retrospective, September 3–4, 2026*
 
-The experiment did not produce a faster production recipe. It produced something I trust more: a loop that could reject its own results.
+The experiment did not produce a faster production recipe. It produced something I trust more: a loop that could reject its own results, followed by an outer pass that turned the strongest admissible control into a simpler Recipe v2 without pretending it was a speed win.
 
-We took the live single-GB300 DeepSeek-V4-Flash-Vision-Exp service offline, preserved its exact container as `dsfv-dspark-prod-hold-20260903-1900`, pinned the image digest and SGLang source revision, then let the inner loop work one card at a time. The campaign used 20 iteration numbers. Ten runs produced admissible performance evidence, two produced calibration artifacts only, and eight were blocked or aborted because the harness could not prove what had happened. No candidate was promoted.
+We took the live single-GB300 DeepSeek-V4-Flash-Vision-Exp service offline, preserved its exact container as `dsfv-dspark-prod-hold-20260903-1900`, pinned the image digest and SGLang source revision, then let the inner loop work one card at a time. The campaign used 20 iteration numbers. Ten runs produced admissible performance evidence, two produced calibration artifacts only, and eight were blocked or aborted because the harness could not prove what had happened. No candidate was promoted on throughput.
 
-That is a successful test of the process described in [the earlier inference recipe generator design note][15]. The process learned, narrowed the search, caught several of its own bugs, and stopped without inventing a win.
+That is a successful test of the process described in [the earlier inference recipe generator design note][15]. The process learned, narrowed the search, caught several of its own bugs, stopped without inventing a win, and still produced a cleaner default launch: static verification, no SPS table, checkpoint-default NextN, immutable image/model pins, and the required DSML encoding patch.
 
-The machine receipts, harness, and generated public-safe audit live in [the companion repository][16]. `research/inner-loop-campaign-audit.json` is the canonical compact accounting; `research/build_campaign_audit.py` rebuilds it from selected receipt fields.
+The machine receipts, harness, generated public-safe audit, and Recipe v2 artifacts live in [the companion repository][16]. `research/inner-loop-campaign-audit.json` is the canonical compact accounting; `research/build_campaign_audit.py` rebuilds it from selected receipt fields. `recipe-v2.json` and `research/recipe-v2-evidence.json` record the selected recipe and its claim boundary.
 
 ## What was frozen
 
@@ -164,7 +164,8 @@ A fail-closed harness does not make failures disappear. It labels them correctly
 
 ## What the campaign established
 
-- The incumbent remained the production recipe.
+- No candidate earned a measured throughput promotion.
+- Iteration 13 became Recipe v2 because it preserved equivalent performance while removing ineffective machinery.
 - Compact verify-all had no reproducible material advantage over static on this workload.
 - The inherited and generated SPS tables did not earn promotion.
 - `num_nextn_predict_layers=1` was a reproducible loss; the checkpoint default of three remained.
@@ -172,11 +173,50 @@ A fail-closed harness does not make failures disappear. It labels them correctly
 - Every valid performance run passed the frozen correctness and teardown gates.
 - The campaign ended with no experiment container, port 30003 offline, the GPU idle, the lock free, and the held production container still stopped.
 
-The last point is deliberate. Calling the campaign a success did not authorize a production restore, and it did not turn the least-bad candidate into a winner.
+The last point is deliberate. Calling the campaign a success did not authorize a production restore, and it did not turn the least-bad candidate into a speed winner.
 
-The success was the refusal to lie. The loop found attractive numbers, then made them survive replication, reversal, runtime proof, and correctness. None did. It also caught enough harness defects to show that autonomous experimentation is mostly an evidence-engineering problem.
+The success was the refusal to lie. The loop found attractive numbers, then made them survive replication, reversal, runtime proof, and correctness. None became a speed promotion. The outer pass still generated a useful recipe by choosing the simplest equally supported runtime surface.
 
 Next time, the machine should start with this stronger loop instead of relearning it at 3 a.m.
+
+## The recipe the outer loop generated
+
+Recipe v2 is the Iteration 13 static/no-SPS control, with the Iteration 16 reversal used to retain checkpoint-default three-layer NextN. It is current because it is simpler and better proven, not because it is faster.
+
+```bash
+SGLANG_RAGGED_VERIFY_MODE=static \
+python3 -m sglang.launch_server --trust-remote-code --model-path /model --tp 1 \
+  --mem-fraction-static 0.90 --context-length 1048576 \
+  --chunked-prefill-size 8192 \
+  --cuda-graph-max-bs-decode 64 --cuda-graph-bs-decode 1 2 4 8 16 32 64 \
+  --max-running-requests 64 \
+  --enable-metrics --host 0.0.0.0 --port 30003 \
+  --served-model-name dsf-vision-exp --api-key '<runtime secret>' \
+  --tool-call-parser deepseekv4 --reasoning-parser deepseek-v4 \
+  --speculative-algorithm DSPARK \
+  --swa-full-tokens-ratio 0.1
+```
+
+Launcher defaults also pin `lmsysorg/sglang@sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6`, use model revision `6821d6ad3681a4b137b066b76094fa82ebd0a380`, and bind-mount the required `patches/encoding_dsv4.py` DSML fix. The default launch omits the SPS table path/mount, omits `--json-model-override-args`, and omits any DSpark block-size override.
+
+| Concurrency | Aggregate output tok/s |
+|---:|---:|
+| C1 | 329.2 |
+| C4 | 748.7 |
+| C8 | 1260.7 |
+| C16 | 1786.0 |
+| C32 | 2383.6 |
+| C64 | 2985.4 |
+
+| Prefill target | Mean tok/s |
+|---:|---:|
+| 8K | 33,935 |
+| 32K | 32,561 |
+| 64K | 35,669 |
+| 128K | 35,662 |
+| 256K | 31,650 |
+
+The claim boundary is narrow: C8-C64 geometric mean was **2000.701 tok/s**, **+1.859%** versus Iteration 0, inside the ±3% materiality band. Recipe v2 therefore means equivalent performance with less runtime machinery and stronger evidence. It does not mean a speed promotion.
 
 ## Sources
 

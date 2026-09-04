@@ -1,13 +1,15 @@
 #!/bin/bash
-# launch-dsfv.sh — DeepSeek-V4-Flash-Vision-Exp on one GB300, TP1, SGLang preview image.
+# launch-dsfv.sh — DeepSeek-V4-Flash-Vision-Exp on one GB300, TP1.
 # Usage: launch-dsfv.sh {ar|dspark} [ctx_tokens] [mem_fraction]
 set -euo pipefail
 mode="${1:?ar|dspark}"; CTX="${2:-1048576}"; MEM="${3:-0.90}"
-# LOCKED 2026-09-03: dspark 1M 0.90 + swa 0.1 + sps table. Do NOT add --chunked-prefill-size 4096 or --speculative-dspark-block-size 3 (both measured slower on one GB300).
-EXTRA_ARGS="${EXTRA_ARGS:---swa-full-tokens-ratio 0.1 --speculative-dspark-sps-table-path /dspark_sps_tp1.json}"
+# LOCKED 2026-09-04 Recipe v2: digest-pinned SGLang, static ragged verification,
+# DSpark checkpoint defaults (gamma 5, NextN 3), no SPS table, SWA 0.1, 1M ctx,
+# mem 0.90, chunked prefill 8192. Do not add SPS or NextN overrides by default.
+EXTRA_ARGS="${EXTRA_ARGS:---swa-full-tokens-ratio 0.1}"
 SHA=6821d6ad3681a4b137b066b76094fa82ebd0a380
 MODEL=/home/milo/models/DeepSeek-V4-Flash-Vision-Exp/$SHA/original
-IMAGE="${IMAGE:-lmsysorg/sglang:dev-dsv4-flash-vision}"
+IMAGE="${IMAGE:-lmsysorg/sglang@sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6}"
 NAME="dsfv-${mode}"
 CACHE=/home/milo/dsfv-cache; mkdir -p $CACHE/{tilelang,triton,nv,root-cache}
 case "$mode" in
@@ -17,8 +19,8 @@ case "$mode" in
 esac
 docker run -d --name "$NAME" --gpus all --ipc host --network host \
   --ulimit memlock=-1 --ulimit stack=67108864 --cap-add IPC_LOCK --cap-add SYS_NICE \
+  -e SGLANG_RAGGED_VERIFY_MODE=static \
   -v "$MODEL":/model:ro \
-  -v /home/milo/dspark_sps_tp1.json:/dspark_sps_tp1.json:ro \
   -v /home/milo/ds4f-vision-exp/patches/encoding_dsv4.py:/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/encoding_dsv4.py:ro \
   -v $CACHE/root-cache:/root/.cache -v $CACHE/tilelang:/root/.tilelang -v $CACHE/triton:/root/.triton -v $CACHE/nv:/root/.nv \
   "$IMAGE" \

@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "artifact": "dsfve-recipe-v2-evidence",
+  "generated_from": "local gitignored receipts by research/build_recipe_v2.py",
+  "public_safety": {
+    "includes_runtime_host": false,
+    "includes_secret_values": false,
+    "receipt_fields_are_selected": true
+  },
+  "selected_recipe_run": {
+    "iteration": 13,
+    "run_id": "013-static-no-sps-paired-control-20260904T103545Z",
+    "run_type": "paired_control",
+    "classification": "valid_control",
+    "verdict": "INCONCLUSIVE",
+    "reference_run_id": "012-compact-verify-all-repeat-20260904T101015Z",
+    "configuration": {
+      "model": "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
+      "model_revision": "6821d6ad3681a4b137b066b76094fa82ebd0a380",
+      "image": "lmsysorg/sglang@sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6",
+      "image_digest": "sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6",
+      "sglang_source_revision": "40b3e15ddbd9a1067e181283d9900dd3f4d76ed7",
+      "hardware": "one NVIDIA GB300",
+      "tensor_parallelism": 1,
+      "context_length": 1048576,
+      "mem_fraction_static": 0.9,
+      "speculative_algorithm": "DSPARK",
+      "dspark_block_size": 5,
+      "dspark_block_size_source": "checkpoint/runtime default; no --speculative-dspark-block-size override",
+      "num_nextn_predict_layers": 3,
+      "num_nextn_predict_layers_source": "checkpoint default; no --json-model-override-args",
+      "ragged_verify_mode": "static",
+      "sps_table": "none",
+      "swa_full_tokens_ratio": 0.1,
+      "chunked_prefill_size": 8192,
+      "cuda_graph_max_bs_decode": 64,
+      "cuda_graph_bs_decode": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64
+      ],
+      "max_running_requests": 64,
+      "tool_call_parser": "deepseekv4",
+      "reasoning_parser": "deepseek-v4",
+      "served_model_name": "dsf-vision-exp",
+      "port": 30003,
+      "api_authentication": "required; secret value is read at runtime and is not part of public artifacts",
+      "dsml_encoding_patch": {
+        "required": true,
+        "container_path": "/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/encoding_dsv4.py",
+        "repo_path": "patches/encoding_dsv4.py"
+      }
+    },
+    "runtime_receipt": {
+      "ragged_verify_mode": "static",
+      "sps_table": "none",
+      "sps_effective": false,
+      "nextn_override": "none",
+      "raw_line": "RUNTIME_MODE_RESULT PASS mode=static sps=none sps_effective=false"
+    },
+    "gates": {
+      "clean_stop": true,
+      "contract_schema": true,
+      "frozen_hashes": true,
+      "gpu_errors": true,
+      "health": true,
+      "opaque_identifiers": true,
+      "patch": true,
+      "preflight": true,
+      "receipt_sanitize": true,
+      "repetition": true,
+      "replay": true,
+      "runner_hash": true,
+      "runtime_mode": true,
+      "smoke": true,
+      "staged_hashes": true
+    },
+    "throughput": [
+      {
+        "concurrency": 1,
+        "aggregate_output_tok_s": 329.2,
+        "mean_ttft_s": 0.191,
+        "samples": 6
+      },
+      {
+        "concurrency": 4,
+        "aggregate_output_tok_s": 748.7,
+        "mean_ttft_s": 0.33,
+        "samples": 12
+      },
+      {
+        "concurrency": 8,
+        "aggregate_output_tok_s": 1260.7,
+        "mean_ttft_s": 0.474,
+        "samples": 24
+      },
+      {
+        "concurrency": 16,
+        "aggregate_output_tok_s": 1786.0,
+        "mean_ttft_s": 0.733,
+        "samples": 48
+      },
+      {
+        "concurrency": 32,
+        "aggregate_output_tok_s": 2383.6,
+        "mean_ttft_s": 1.162,
+        "samples": 96
+      },
+      {
+        "concurrency": 64,
+        "aggregate_output_tok_s": 2985.4,
+        "mean_ttft_s": 2.505,
+        "samples": 192
+      }
+    ],
+    "prefill": [
+      {
+        "target_tokens": 8000,
+        "prompt_tokens": 6479,
+        "mean_tok_s": 33935.0,
+        "ttft_s": [
+          0.2,
+          0.19,
+          0.19
+        ],
+        "tok_s": [
+          32507,
+          34301,
+          34997
+        ]
+      },
+      {
+        "target_tokens": 32000,
+        "prompt_tokens": 25905,
+        "mean_tok_s": 32561.0,
+        "ttft_s": [
+          0.81,
+          0.8,
+          0.79
+        ],
+        "tok_s": [
+          31945,
+          32761,
+          32978
+        ]
+      },
+      {
+        "target_tokens": 64000,
+        "prompt_tokens": 52011,
+        "mean_tok_s": 35669.0,
+        "ttft_s": [
+          1.45,
+          1.46,
+          1.45
+        ],
+        "tok_s": [
+          35759,
+          35542,
+          35705
+        ]
+      },
+      {
+        "target_tokens": 128000,
+        "prompt_tokens": 103669,
+        "mean_tok_s": 35662.0,
+        "ttft_s": [
+          2.91,
+          2.91,
+          2.92
+        ],
+        "tok_s": [
+          35682,
+          35733,
+          35572
+        ]
+      },
+      {
+        "target_tokens": 256000,
+        "prompt_tokens": 207405,
+        "mean_tok_s": 31650.0,
+        "ttft_s": [
+          6.58,
+          6.55,
+          6.54
+        ],
+        "tok_s": [
+          31534,
+          31697,
+          31719
+        ]
+      }
+    ],
+    "claim_boundary": {
+      "classification": "equivalent_performance_inside_frozen_band_not_speed_promotion",
+      "primary_rows": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "primary_c8_c64_geomean_tok_s": 2000.701,
+      "vs_iteration_0_delta_pct": 1.859,
+      "materiality_band_pct": 3.0,
+      "plain_language": "Recipe v2 is operationally simpler and better proven; it is not a measured speed promotion."
+    },
+    "comparisons": {
+      "same_hour_compact_reference": {
+        "reference_run_id": "012-compact-verify-all-repeat-20260904T101015Z",
+        "primary_geomean_delta_pct": 0.659,
+        "prefill_geomean_delta_pct": 0.127,
+        "verdict": "INCONCLUSIVE"
+      },
+      "iteration_0_static_baseline": {
+        "reference_run_id": "000-incumbent-null-20260904T004736Z",
+        "primary_geomean_delta_pct": 1.859,
+        "computed_primary_geomean_delta_pct": 1.859,
+        "prefill_geomean_delta_pct": -0.801
+      }
+    },
+    "source_receipts": [
+      "inner-loop/runs/013-static-no-sps-paired-control-20260904T103545Z/contract.json",
+      "inner-loop/runs/013-static-no-sps-paired-control-20260904T103545Z/results.json",
+      "inner-loop/runs/013-static-no-sps-paired-control-20260904T103545Z/decision.json",
+      "inner-loop/runs/013-static-no-sps-paired-control-20260904T103545Z/paired-comparisons.json",
+      "inner-loop/runs/013-static-no-sps-paired-control-20260904T103545Z/runtime-mode.txt"
+    ]
+  },
+  "supporting_reversal": {
+    "iteration": 16,
+    "run_id": "016-compact-nextn-checkpoint-reversal-20260904T120854Z",
+    "purpose": "checkpoint-default NextN reversal after the one-layer candidate",
+    "checkpoint_num_nextn_predict_layers": 3,
+    "decision_verdict": "WIN",
+    "reversal_vs_one_layer_primary_geomean_delta_pct": 3.608,
+    "aba_one_layer_primary_geomean_delta_pct": -4.093,
+    "aba_one_layer_prefill_geomean_delta_pct": -1.538,
+    "source_receipts": [
+      "inner-loop/runs/016-compact-nextn-checkpoint-reversal-20260904T120854Z/contract.json",
+      "inner-loop/runs/016-compact-nextn-checkpoint-reversal-20260904T120854Z/decision.json",
+      "inner-loop/runs/016-compact-nextn-checkpoint-reversal-20260904T120854Z/paired-comparisons.json"
+    ]
+  },
+  "campaign_accounting": {
+    "audit_path": "research/inner-loop-campaign-audit.json",
+    "counts": {
+      "iteration_numbers": 20,
+      "valid_performance_evidence": 10,
+      "blocked_or_aborted": 8,
+      "calibration_only": 2,
+      "calibration_artifacts_generated": 2,
+      "candidate_recipe_promotions": 0
+    },
+    "headline_findings": {
+      "compact_verify_all_aba": {
+        "classification": "NEUTRAL_WITHIN_FROZEN_BAND",
+        "primary_geomean_delta_pct": 0.901,
+        "prefill_geomean_delta_pct": 0.217,
+        "sequence": [
+          "012-compact-verify-all-repeat-20260904T101015Z",
+          "013-static-no-sps-paired-control-20260904T103545Z",
+          "014-compact-verify-all-opposite-order-20260904T104943Z"
+        ]
+      },
+      "calibrated_sps_then_same_hour_removal": {
+        "iteration_10_vs_older_compact_primary_geomean_delta_pct": -4.327,
+        "iteration_12_table_off_vs_table_on_primary_geomean_delta_pct": 0.464,
+        "interpretation": "Removing the calibrated SPS table changed same-hour primary decode throughput by only +0.464%, so Iteration 10's older-reference loss cannot be causally assigned to the table. Iteration 1's unusually high C8 row did not reproduce. Neither compact scheduling variant is promotable from this evidence."
+      },
+      "one_nextn_layer_aba": {
+        "classification": "LOSS",
+        "primary_geomean_delta_pct": -4.093,
+        "prefill_geomean_delta_pct": -1.538,
+        "sequence": [
+          "014-compact-verify-all-opposite-order-20260904T104943Z",
+          "015-compact-nextn-one-20260904T115044Z",
+          "016-compact-nextn-checkpoint-reversal-20260904T120854Z"
+        ],
+        "retained_checkpoint_default_layers": 3
+      },
+      "additive_sps_calibration": {
+        "classification": "PASS_CALIBRATION",
+        "promotion_authorized": false,
+        "artifact_sha256": "af1e9a72ee517ff35207544508bd5deccbc0b01c8bf5ec598bbc6c617f56ec5c",
+        "cells": 132,
+        "fit_r_squared": 0.9996,
+        "fit_p95_relative_error": 0.02,
+        "fit_max_relative_error": 0.0487
+      },
+      "additive_sps_runtime": {
+        "classification": "LOSS",
+        "primary_geomean_delta_pct": -7.145,
+        "prefill_geomean_delta_pct": -0.833,
+        "worst_primary_row_delta_pct": -21.17,
+        "descriptive_two_run_midpoint_primary_pct": -4.861,
+        "descriptive_two_run_midpoint_status": "descriptive_only_iteration_18_contract_was_blocked"
+      }
+    }
+  },
+  "closed_mechanisms": [
+    {
+      "mechanism": "compact_verify_all_as_speedup",
+      "result": "Closed as neutral: compact-static-compact ABA was +0.901% primary C8-C64 and +0.217% cold prefill, inside the frozen +/-3% materiality band.",
+      "scope": "Pinned DSFVE model/image/source on one GB300 TP1 with DSpark gamma 5, 1M context, memory 0.90, no SPS table, and the 7K-in/1K-out temperature-0 workload.",
+      "reopen_condition": "Only reopen for a new image/source revision, hardware/workload change, or a new mechanism; use another frozen alternating control sequence before claiming a speedup."
+    },
+    {
+      "mechanism": "dspark_sps_tables",
+      "result": "Not promoted: inherited SPS lost -3.561% primary in Iteration 2, calibrated SPS lost -4.327% against its frozen older compact reference in Iteration 10, same-hour table-off changed only +0.464%, and the corrected additive SPS runtime lost -7.145% primary with a -21.170% C8 row in Iteration 19.",
+      "scope": "DSpark SPS tables on the pinned SGLang digest/source and single-GB300 DSFVE workload, including inherited, diagonal calibrated, and additive calibrated artifacts.",
+      "reopen_condition": "Only reopen if SGLang changes SPS semantics/profiling or a new profiler supplies a new artifact; test it against a same-hour no-table control with mounted-artifact digest proof."
+    },
+    {
+      "mechanism": "one_nextn_predict_layer",
+      "result": "Rejected: forcing num_nextn_predict_layers=1 lost in Iteration 15, and the default-one-default ABA estimate was -4.093% primary and -1.538% prefill for one layer.",
+      "scope": "Pinned DSFVE checkpoint and SGLang digest/source on one GB300 TP1 with DSpark gamma 5 and no SPS table.",
+      "reopen_condition": "Only reopen for a new checkpoint or runtime implementation; verify the live NextN value and run an immediate reversal control."
+    },
+    {
+      "mechanism": "dspark_gamma_3",
+      "result": "Parked from the September 2-3 baseline: gamma 3 did not beat the gamma 5/default path on this box and had lower measured acceptance; Recipe v2 keeps the checkpoint/runtime default gamma 5 with no block-size override.",
+      "scope": "Single GB300 TP1 DSpark serving for DSFVE. The old gamma-3 measurement was taken before the inner-loop harness and was not a promotable isolated v2 delta.",
+      "reopen_condition": "Only reopen as a fresh one-delta card against Recipe v2, without chunked-prefill or SPS confounds, if a new runtime or workload makes gamma smaller plausible."
+    },
+    {
+      "mechanism": "chunked_prefill_4096",
+      "result": "Rejected before Recipe v2: the September 2-3 ledger measured 4096 chunked prefill as slower on one GB300, with TTFT roughly doubling and C8/C16 about 20% lower than the no-4096 path.",
+      "scope": "Pinned DSFVE one-GB300 serving with the 1M-context SGLang preview image; Recipe v2 keeps chunked-prefill size 8192.",
+      "reopen_condition": "Only reopen after a chunked-prefill implementation change or a workload that directly values a different prefill/decode tradeoff; rerun throughput and cold-prefill gates together."
+    }
+  ]
+}
