@@ -1,0 +1,85 @@
+{
+  "authorization": {
+    "production_observed_port_30003_listener": false,
+    "production_observed_running_containers": false,
+    "restore_authorized": false,
+    "run_authorized_at": "2026-09-04T18:02:00-05:00",
+    "run_authorized_at_local": "2026-09-04 18:02 CDT",
+    "run_authorized_by": "James"
+  },
+  "campaign_id": "sps-requal-20260904-now",
+  "candidate": {
+    "num_nextn_predict_layers": "checkpoint",
+    "profile_mode": "none",
+    "profiler_source_sha": null,
+    "ragged_verify_mode": "static",
+    "sps_fit_mbin_w": null,
+    "sps_table": "none"
+  },
+  "compact_control_runs": [
+    "sps-requal-20260904-now-C0",
+    "sps-requal-20260904-now-C1",
+    "sps-requal-20260904-now-C2"
+  ],
+  "compare_to_run": "adjacent-control-as-declared",
+  "expected_concurrency": [
+    1,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "expected_prefill_targets": [
+    8000,
+    32000,
+    64000,
+    128000,
+    256000
+  ],
+  "expected_workload_classes": [
+    "natural_prose",
+    "code_oriented",
+    "six_turn_replay",
+    "warm_prefix_repeat",
+    "staggered_mixed_load"
+  ],
+  "phase": "anchor",
+  "production_restore_authorized": false,
+  "release_state": "prewritten_unreleased",
+  "run_id": "sps-requal-20260904-now-R0",
+  "schema_version": 2,
+  "sequence": 2,
+  "slug": "R0",
+  "static_anchor_runs": [
+    "sps-requal-20260904-now-R0",
+    "sps-requal-20260904-now-R1"
+  ],
+  "status": "frozen",
+  "target": {
+    "agent_workload_gate_sha256": "cb712799cda484e8fdf08fd6d28b6ae247c861abb952e2140923b49b8f2a8c6a",
+    "bench_sha256": "61377a22d380449330e4c9055be2ef12e138c992f549617fe9bd0f8816f8cc7c",
+    "container": "dsfv-spsrq-r0",
+    "dispatcher_sha256": "80b0b3c1d978aa390fa1405e5ffadeabf7b94979c8c8fe8b238158c82674771c",
+    "image_digest": "sha256:7ac467a50508b7029a23e846c150998fdd26d95c1cfd377ea7e74e28374486a6",
+    "launcher_sha256": "426f56f0803f7205265b38e0c4191475647f7c25aa57806a5381fed435381bb9",
+    "model_revision": "6821d6ad3681a4b137b066b76094fa82ebd0a380",
+    "replay_gate_sha256": "3dacaae275ef8231e89d92a13011341f688c9284356a7446fca6628812d41a5a",
+    "runner_sha256": "ca1359d87063440802c62178b083255d4c042a48dfd8c667c56919f6eb776093",
+    "sglang_source_revision": "40b3e15ddbd9a1067e181283d9900dd3f4d76ed7",
+    "sps_profile_gate_sha256": "88725a329a2018899996110d98f183c20b05e46490b516472e2e53b5e32e45bc",
+    "summarizer_sha256": "b962a8896423cfbf4b115e7e9e114d0f69bc96dd693a4ae8c6e6c459907304e5",
+    "validator_sha256": "7069f7683446c29731cb42590781d70ec85275d11f18617460e3a372216bd6d1"
+  },
+  "winner_rule": {
+    "also_report_vs": "static_recipe_v2_anchors",
+    "compare_candidate_to": "adjacent_compact_controls",
+    "do_not_claim_only_table_delta_from_recipe_v2": true,
+    "primary_rows": [
+      8,
+      16,
+      32,
+      64
+    ]
+  }
+}

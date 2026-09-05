@@ -16,6 +16,12 @@ The outer-loop repository update selected **Recipe v2** from Iteration 13: stati
 - Generated receipt audit: [`../research/inner-loop-campaign-audit.md`](../research/inner-loop-campaign-audit.md)
 - Audit source: [`../research/inner-loop-campaign-audit.json`](../research/inner-loop-campaign-audit.json)
 
+## September 4 SPS requalification (campaign `sps-requal-20260904-now`)
+
+Closed with `CONTROL=STOP` at the calibration gate. Two clean additive-SPS profiles were collected (P0, P1) and the fine-grained PR #37815 fit was validated held-out; no width cleared the 50% MAE gate, so no serving candidate ran and Recipe v2 stands. Details, hashes, and the revised reopen condition: [`../research/do-not-retry.md`](../research/do-not-retry.md) and [`campaigns/sps-requal-20260904-now/README.md`](campaigns/sps-requal-20260904-now/README.md).
+
+Harness changes landed by this campaign (schema v2, campaign-local state): campaign-scoped `CONTROL`/`RELEASE`/`queue/`/`runs/`, `sps_profile_gate.py` (derived-M formula matches the pinned profiler; signed bias), the profile-branch NextN receipt, and `fit_select_sps.py` for offline A-fit/B-validate.
+
 ## Control
 
 - `CONTROL` contains `RUN` only while another phase may start; the closed campaign now contains `STOP`.

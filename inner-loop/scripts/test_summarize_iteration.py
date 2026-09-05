@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import json
 import tempfile
 import unittest
@@ -6,226 +8,139 @@ from pathlib import Path
 
 from summarize_iteration import summarize
 
+WORKLOAD_NAMES = [
+    "natural_prose",
+    "code_oriented",
+    "six_turn_replay",
+    "warm_prefix_repeat",
+    "staggered_mixed_load",
+]
+
+
+def write_common_run(run: Path, contract: dict) -> None:
+    run.mkdir(parents=True, exist_ok=True)
+    (run / "contract.json").write_text(json.dumps(contract))
+    rows = [
+        {"C": c, "n": 3 * c, "agg_tok_s": 100.0 * c, "per_stream_tok_s": 100.0,
+         "mean_ttft_s": 0.2, "ptok": 7000, "ctok_total": 3072 * c, "wall_s": 1.0,
+         "accept_len_counter": 3.7, "accept_rate_gauge": 0.7}
+        for c in [1, 4, 8, 16, 32, 64]
+    ]
+    (run / "throughput.txt").write_text("\n".join("BENCH " + json.dumps(r) for r in rows))
+    (run / "prefill.txt").write_text("\n".join(
+        f"PREFILL target={n} prompt_tokens={n-10} ttft_s=[1.0, 1.1, 0.9] tok_s=[10000, 9090, 11100] mean_tok_s=10063"
+        for n in [8000, 32000, 64000, 128000, 256000]
+    ))
+    workload_rows = [
+        {
+            "prompt_class": name,
+            "max_tokens": 128,
+            "temperature": 0,
+            "reasoning_effort": "low",
+            "ttft_s": 0.2,
+            "wall_s": 2.0,
+            "decode_tok_s": 100.0,
+            "output_tokens": 200,
+            "finish_reason": "stop",
+            "speculative_acceptance": {"accept_len": 3.2, "accept_rate": 0.72},
+            "cache_hit_tokens": 0,
+            "repetition_ok": True,
+            "tool_fidelity_ok": True,
+        }
+        for name in WORKLOAD_NAMES
+    ]
+    (run / "agent-workload.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in workload_rows)
+    )
+    receipts = {
+        "smoke.txt": "PASS models\nSMOKE_RESULT PASS\n",
+        "replay.txt": "REPLAY_TURN PASS turn=1 ttft_s=0.1 wall_s=0.2\nREPLAY_RESULT PASS turns=6\n",
+        "opaque.txt": "OPAQUE_RESULT PASS n=64 mismatches=0\n",
+        "repaudit.txt": "REPAUDIT C=64 N=128 flagged=0 rate=0.0%\n",
+        "patch.txt": "PATCH_RESULT PASS count=1\n",
+        "runtime-mode.txt": "RUNTIME_MODE_RESULT PASS mode=compact sps=none verify_all=true\nNEXTN_OVERRIDE_RESULT PASS num_nextn_predict_layers=checkpoint\n",
+        "health.txt": "HEALTH_RESULT PASS\n",
+        "gpu-errors.txt": "GPU_ERROR_RESULT PASS\n",
+        "dispatch.txt": "CONTRACT_SCHEMA_RESULT PASS campaign_id=sps-requal-20260904-now phase=baseline run_id=fixture\nSTAGE_HASH_RESULT PASS files=11\nFROZEN_HASH_RESULT PASS\n",
+        "preflight.txt": "PREFLIGHT_RESULT PASS\n",
+        "receipt-sanitize.txt": "RECEIPT_SANITIZE_RESULT PASS\n",
+        "stop.txt": "STOP_RESULT PASS\nPORT_AFTER_STOP PASS\n",
+    }
+    if contract.get("candidate", {}).get("sps_table") == "fine-grained":
+        digest = contract["target"]["sps_table_sha256"]
+        receipts["runtime-mode.txt"] = "RUNTIME_MODE_RESULT PASS mode=compact sps=fine-grained verify_all=false\nNEXTN_OVERRIDE_RESULT PASS num_nextn_predict_layers=checkpoint\n"
+        receipts["preflight.txt"] = f"SPS_ARTIFACT_HASH_RESULT PASS sha256={digest} mode=fine-grained\nPREFLIGHT_RESULT PASS\n"
+        receipts["sps-mount-hash.txt"] = f"SPS_MOUNT_HASH_RESULT PASS sha256={digest} mode=fine-grained container=fixture\n"
+    for name, text in receipts.items():
+        (run / name).write_text(text)
+
 
 class SummarizeIterationTests(unittest.TestCase):
-    def test_complete_baseline(self):
+    def test_schema_v2_complete_run_requires_workload_receipts(self):
         with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            (run / "contract.json").write_text(json.dumps({
-                "iteration": 0,
-                "slug": "incumbent-null",
+            run = Path(td) / "B0"
+            contract = {
+                "schema_version": 2,
+                "campaign_id": "sps-requal-20260904-now",
+                "phase": "baseline",
+                "sequence": 1,
+                "slug": "compact-no-table",
+                "candidate": {"sps_table": "none", "num_nextn_predict_layers": "checkpoint"},
                 "target": {"validator_sha256": "a" * 64},
                 "expected_concurrency": [1, 4, 8, 16, 32, 64],
                 "expected_prefill_targets": [8000, 32000, 64000, 128000, 256000],
-            }))
-            rows = [
-                {"C": c, "n": 3 * c, "agg_tok_s": 100.0 * c,
-                 "per_stream_tok_s": 100.0, "mean_ttft_s": 0.2,
-                 "ptok": 7000, "ctok_total": 3072 * c,
-                 "wall_s": 1.0, "accept_len": 3.7}
-                for c in [1, 4, 8, 16, 32, 64]
-            ]
-            (run / "throughput.txt").write_text("\n".join("BENCH " + json.dumps(r) for r in rows))
-            (run / "prefill.txt").write_text("\n".join(
-                f"PREFILL target={n} prompt_tokens={n-10} ttft_s=[1.0, 1.1, 0.9] tok_s=[10000, 9090, 11100] mean_tok_s=10063"
-                for n in [8000, 32000, 64000, 128000, 256000]
-            ))
-            (run / "smoke.txt").write_text("PASS models\nSMOKE_RESULT PASS\n")
-            (run / "replay.txt").write_text("REPLAY_RESULT PASS turns=6\n")
-            (run / "opaque.txt").write_text("OPAQUE_RESULT PASS n=64 mismatches=0\n")
-            (run / "repaudit.txt").write_text("REPAUDIT C=64 N=128 flagged=0 rate=0.0% agg_out_tok_s=1800 mean_ptok=7000 mean_ctok=900 finish=Counter({'stop': 128}) worst_8gram=0.003\n")
-            (run / "patch.txt").write_text("PATCH_RESULT PASS count=1\n")
-            (run / "runtime-mode.txt").write_text("RUNTIME_MODE_RESULT PASS mode=static sps_effective=false\n")
-            (run / "health.txt").write_text("HEALTH_RESULT PASS\n")
-            (run / "gpu-errors.txt").write_text("GPU_ERROR_RESULT PASS\n")
-            (run / "dispatch.txt").write_text(
-                "CONTRACT_SCHEMA_RESULT PASS iteration=0 run_id=fixture\n"
-                "STAGE_HASH_RESULT PASS files=10\n"
-                "FROZEN_HASH_RESULT PASS\n"
-            )
-            (run / "preflight.txt").write_text("PREFLIGHT_RESULT PASS\n")
-            (run / "receipt-sanitize.txt").write_text("RECEIPT_SANITIZE_RESULT PASS\n")
-            (run / "stop.txt").write_text("STOP_RESULT PASS\nPORT_AFTER_STOP PASS\n")
-            result = summarize(run)
-            self.assertEqual(result["outcome"], "BASELINE")
-            self.assertEqual([x["C"] for x in result["throughput"]], [1, 4, 8, 16, 32, 64])
-            self.assertEqual(len(result["prefill"]), 5)
-            self.assertTrue(all(result["gates"].values()))
-
-            (run / "dispatch.txt").write_text(
-                "STAGE_HASH_RESULT PASS files=10\nFROZEN_HASH_RESULT PASS\n"
-            )
-            result = summarize(run)
-            self.assertEqual(result["outcome"], "BLOCKED")
-            self.assertFalse(result["gates"]["contract_schema"])
-
-    def test_complete_split_sps_calibration(self):
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            (run / "contract.json").write_text(json.dumps({
-                "iteration": 4,
-                "slug": "sps-profile-static-split",
-                "candidate": {"profile_mode": "sps"},
-                "target": {
-                    "container": "dsfv-iter004-profile",
-                    "runner_sha256": "fixture",
-                },
-                "expected_concurrency": [],
-                "expected_prefill_targets": [],
-            }))
-            receipts = {
-                "dispatch.txt": "STAGE_HASH_RESULT PASS files=10\nFROZEN_HASH_RESULT PASS\n",
-                "preflight.txt": "RUNNER_HASH_RESULT PASS\nPREFLIGHT_RESULT PASS\n",
-                "smoke.txt": "SMOKE_RESULT PASS\n",
-                "replay.txt": "REPLAY_RESULT PASS turns=6\n",
-                "opaque.txt": "OPAQUE_RESULT PASS n=64 mismatches=0\n",
-                "repaudit.txt": "REPAUDIT C=64 N=128 flagged=0 rate=0.0%\n",
-                "patch.txt": "PATCH_RESULT PASS count=1\n",
-                "patch-tier0.txt": "PATCH_RESULT PASS count=1\n",
-                "runtime-mode-tier0.txt": "RUNTIME_MODE_RESULT PASS mode=static sps_profile=false\n",
-                "runtime-mode.txt": "RUNTIME_MODE_RESULT PASS mode=static sps_profile=true\n",
-                "health.txt": "HEALTH_RESULT PASS phase=tier0\nHEALTH_RESULT PASS phase=sps-profile\n",
-                "profile-hash.txt": "PROFILER_HASH_RESULT PASS sha256=fixture\nSPS_MODULE_HASH_RESULT PASS sha256=fixture\n",
-                "profile-gate.txt": "SPS_PROFILE_RESULT PASS probes=11 rounds=33 min_match_fraction=1.000\n",
-                "gpu-errors.txt": "GPU_ERROR_RESULT PASS logs=2\n",
-                "receipt-sanitize.txt": "RECEIPT_SANITIZE_RESULT PASS\n",
-                "stop.txt": (
-                    "STOP_RESULT PASS container=dsfv-iter004-profile-tier0\n"
-                    "STOP_RESULT PASS container=dsfv-iter004-profile\n"
-                    "PORT_AFTER_STOP PASS\n"
-                ),
+                "expected_workload_classes": WORKLOAD_NAMES,
             }
-            for name, text in receipts.items():
-                (run / name).write_text(text)
+            write_common_run(run, contract)
             result = summarize(run)
-            self.assertEqual(result["outcome"], "COMPLETE")
-            self.assertTrue(result["gates"]["sps_profile"])
-            self.assertTrue(all(result["gates"].values()))
+        self.assertEqual(result["schema_version"], 2)
+        self.assertEqual(result["campaign_id"], "sps-requal-20260904-now")
+        self.assertEqual(result["outcome"], "COMPLETE")
+        self.assertTrue(result["gates"]["agent_workload"])
+        self.assertEqual([row["prompt_class"] for row in result["agent_workload"]], WORKLOAD_NAMES)
 
-            contract = json.loads((run / "contract.json").read_text())
-            contract["candidate"]["profile_mode"] = "sps-additive"
-            (run / "contract.json").write_text(json.dumps(contract))
-            result = summarize(run)
-            self.assertEqual(result["outcome"], "COMPLETE")
-            self.assertTrue(result["gates"]["sps_profile"])
-
-    def test_calibrated_table_requires_staged_and_mounted_hashes(self):
+    def test_schema_v2_missing_workload_receipt_blocks_run(self):
         with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            digest = "6c5acc36f422fc95c425445f1253a7571407b22e7871571622bbfb427b99eb69"
-            (run / "contract.json").write_text(json.dumps({
-                "iteration": 9,
-                "slug": "compact-calibrated-sps",
-                "candidate": {"sps_table": "calibrated"},
-                "target": {"sps_table_sha256": digest},
-                "expected_concurrency": [],
-                "expected_prefill_targets": [],
-            }))
-            receipts = {
-                "dispatch.txt": "STAGE_HASH_RESULT PASS files=11\nFROZEN_HASH_RESULT PASS\n",
-                "preflight.txt": (
-                    f"SPS_ARTIFACT_HASH_RESULT PASS sha256={digest} mode=calibrated\n"
-                    "PREFLIGHT_RESULT PASS\n"
-                ),
-                "sps-mount-hash.txt": (
-                    f"SPS_MOUNT_HASH_RESULT PASS sha256={digest} mode=calibrated container=fixture\n"
-                ),
-                "smoke.txt": "SMOKE_RESULT PASS\n",
-                "replay.txt": "REPLAY_RESULT PASS turns=6\n",
-                "opaque.txt": "OPAQUE_RESULT PASS n=64 mismatches=0\n",
-                "repaudit.txt": "REPAUDIT C=64 N=128 flagged=0 rate=0.0%\n",
-                "patch.txt": "PATCH_RESULT PASS count=1\n",
-                "runtime-mode.txt": "RUNTIME_MODE_RESULT PASS mode=compact sps=calibrated verify_all=false\n",
-                "health.txt": "HEALTH_RESULT PASS\n",
-                "gpu-errors.txt": "GPU_ERROR_RESULT PASS\n",
-                "receipt-sanitize.txt": "RECEIPT_SANITIZE_RESULT PASS\n",
-                "stop.txt": "STOP_RESULT PASS\nPORT_AFTER_STOP PASS\n",
-            }
-            for name, text in receipts.items():
-                (run / name).write_text(text)
-
-            result = summarize(run)
-            self.assertEqual(result["outcome"], "COMPLETE")
-            self.assertTrue(result["gates"]["sps_table_hash"])
-
-            (run / "sps-mount-hash.txt").unlink()
-            result = summarize(run)
-            self.assertEqual(result["outcome"], "BLOCKED")
-            self.assertFalse(result["gates"]["sps_table_hash"])
-
-    def test_nextn_override_requires_explicit_runtime_receipt(self):
-        with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            (run / "contract.json").write_text(json.dumps({
-                "iteration": 15,
-                "slug": "compact-nextn-one",
-                "candidate": {
-                    "sps_table": "none",
-                    "num_nextn_predict_layers": 1,
-                },
+            run = Path(td) / "B0"
+            contract = {
+                "schema_version": 2,
+                "campaign_id": "sps-requal-20260904-now",
+                "phase": "baseline",
+                "sequence": 1,
+                "slug": "compact-no-table",
+                "candidate": {"sps_table": "none"},
                 "target": {},
                 "expected_concurrency": [],
                 "expected_prefill_targets": [],
-            }))
-            receipts = {
-                "dispatch.txt": "STAGE_HASH_RESULT PASS files=10\nFROZEN_HASH_RESULT PASS\n",
-                "preflight.txt": "PREFLIGHT_RESULT PASS\n",
-                "smoke.txt": "SMOKE_RESULT PASS\n",
-                "replay.txt": "REPLAY_RESULT PASS turns=6\n",
-                "opaque.txt": "OPAQUE_RESULT PASS n=64 mismatches=0\n",
-                "repaudit.txt": "REPAUDIT C=64 N=128 flagged=0 rate=0.0%\n",
-                "patch.txt": "PATCH_RESULT PASS count=1\n",
-                "runtime-mode.txt": (
-                    "RUNTIME_MODE_RESULT PASS mode=compact sps=uninitialized verify_all=true\n"
-                ),
-                "health.txt": "HEALTH_RESULT PASS\n",
-                "gpu-errors.txt": "GPU_ERROR_RESULT PASS\n",
-                "receipt-sanitize.txt": "RECEIPT_SANITIZE_RESULT PASS\n",
-                "stop.txt": "STOP_RESULT PASS\nPORT_AFTER_STOP PASS\n",
+                "expected_workload_classes": WORKLOAD_NAMES,
             }
-            for name, text in receipts.items():
-                (run / name).write_text(text)
-
+            write_common_run(run, contract)
+            (run / "agent-workload.jsonl").unlink()
             result = summarize(run)
-            self.assertEqual(result["outcome"], "BLOCKED")
-            self.assertFalse(result["gates"]["nextn_override"])
+        self.assertEqual(result["outcome"], "BLOCKED")
+        self.assertFalse(result["gates"]["agent_workload"])
 
-            with (run / "runtime-mode.txt").open("a") as handle:
-                handle.write(
-                    "NEXTN_OVERRIDE_RESULT PASS num_nextn_predict_layers=1\n"
-                )
-            result = summarize(run)
-            self.assertEqual(result["outcome"], "COMPLETE")
-            self.assertTrue(result["gates"]["nextn_override"])
-
-            contract = json.loads((run / "contract.json").read_text())
-            contract["candidate"]["num_nextn_predict_layers"] = "checkpoint"
-            (run / "contract.json").write_text(json.dumps(contract))
-            result = summarize(run)
-            self.assertEqual(result["outcome"], "BLOCKED")
-            self.assertFalse(result["gates"]["nextn_override"])
-
-            with (run / "runtime-mode.txt").open("a") as handle:
-                handle.write(
-                    "NEXTN_OVERRIDE_RESULT PASS num_nextn_predict_layers=checkpoint\n"
-                )
-            result = summarize(run)
-            self.assertEqual(result["outcome"], "COMPLETE")
-            self.assertTrue(result["gates"]["nextn_override"])
-
-    def test_missing_row_is_blocked(self):
+    def test_schema_v2_fine_grained_table_requires_mount_receipt(self):
         with tempfile.TemporaryDirectory() as td:
-            run = Path(td)
-            (run / "contract.json").write_text(json.dumps({
-                "iteration": 0,
-                "slug": "incumbent-null",
-                "expected_concurrency": [1, 4],
+            run = Path(td) / "S1"
+            contract = {
+                "schema_version": 2,
+                "campaign_id": "sps-requal-20260904-now",
+                "phase": "candidate",
+                "sequence": 2,
+                "slug": "compact-fine-grained-sps",
+                "candidate": {"sps_table": "fine-grained", "num_nextn_predict_layers": "checkpoint"},
+                "target": {"sps_table_sha256": "f" * 64},
+                "expected_concurrency": [],
                 "expected_prefill_targets": [],
-            }))
-            (run / "throughput.txt").write_text('BENCH {"C": 1, "agg_tok_s": 100}\n')
+                "expected_workload_classes": WORKLOAD_NAMES,
+            }
+            write_common_run(run, contract)
+            self.assertEqual(summarize(run)["outcome"], "COMPLETE")
+            (run / "sps-mount-hash.txt").unlink()
             result = summarize(run)
-            self.assertEqual(result["outcome"], "BLOCKED")
-            self.assertIn("missing throughput rows: [4]", result["blockers"])
+        self.assertEqual(result["outcome"], "BLOCKED")
+        self.assertFalse(result["gates"]["sps_table_hash"])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,66 @@
+{
+  "campaign_id": "sps-requal-20260904-now",
+  "fit_source": "profile A only (P0); validated on held-out profile B (P1); no pooled refit",
+  "held_out_metrics": {
+    "1": {
+      "m_probes": 25,
+      "mae_ms": 0.14602437937937957,
+      "max_error_ms": 0.8411333333333583,
+      "mean_bias_ms": 0.00982999999997805,
+      "n": 120,
+      "rmse_ms": 0.1968567019217378,
+      "self_fit_mae_ms": 0.11456641666666618,
+      "table_sha256": "b5a92d455b4b3865faf8194b280432d5e8bebcbfb52bb494066779825e290a16"
+    },
+    "6": {
+      "m_probes": 9,
+      "mae_ms": 0.14399024729164042,
+      "max_error_ms": 0.7080063741882782,
+      "mean_bias_ms": 0.009726976755187154,
+      "n": 120,
+      "rmse_ms": 0.18774009400195962,
+      "self_fit_mae_ms": 0.11679219432213518,
+      "table_sha256": "31a5d96e14254a256f8747cc108bdebce124a9a132966f4079b86521570dc4d6"
+    },
+    "64": {
+      "m_probes": 2,
+      "mae_ms": 0.1372030332031249,
+      "max_error_ms": 0.6403613020833261,
+      "mean_bias_ms": 0.0037827994791703704,
+      "n": 120,
+      "rmse_ms": 0.1812102933763855,
+      "self_fit_mae_ms": 0.12153889572482637,
+      "table_sha256": "720112d8a0fb1dbfe08d6587442c201277077562235e8b5289170d2e1d867b3b"
+    }
+  },
+  "held_out_noise_mae_ms": 0.2955274999999999,
+  "profiler_sha256": "7ca2e5d832f76a88dfb3ad76fb34918e902aa295110e72b9eb19fb1fb1a09546",
+  "raw_profile_a_records_sha256": "5e85c55676130ea620246b44de419ee1933c71a9dce43519295cea4dde45c0d6",
+  "raw_profile_a_sha256": "5f3f48d3737394a28413aa06149d48a3db06ee31efe761f0e1316b546b9dea5c",
+  "raw_profile_b_records_sha256": "bd37fdb16b88bddc9df72852ab107694e9a9f794a6290a0dcb6995b39078c074",
+  "raw_profile_b_sha256": "42a146d5bb7cea1d7a84c15584c3b51b30bd568fee63e56b2c890c6c7451e3d4",
+  "selection": {
+    "reason": "no width improves held-out MAE by at least 50% without worsening secondary gates",
+    "result": "FAIL"
+  },
+  "sps_module_sha256": "c87a7f72ad1299cbb9bb337e0ffc3bb34de2c02624e423c717c41fc41c73ee08",
+  "tables": {
+    "1": {
+      "path": "/Users/jamesmeadlock/hermes/dsfve-sps-requalification-20260904/inner-loop/campaigns/sps-requal-20260904-now/artifacts/fit-r1/table-w1.json",
+      "sha256": "b5a92d455b4b3865faf8194b280432d5e8bebcbfb52bb494066779825e290a16"
+    },
+    "6": {
+      "path": "/Users/jamesmeadlock/hermes/dsfve-sps-requalification-20260904/inner-loop/campaigns/sps-requal-20260904-now/artifacts/fit-r1/table-w6.json",
+      "sha256": "31a5d96e14254a256f8747cc108bdebce124a9a132966f4079b86521570dc4d6"
+    },
+    "64": {
+      "path": "/Users/jamesmeadlock/hermes/dsfve-sps-requalification-20260904/inner-loop/campaigns/sps-requal-20260904-now/artifacts/fit-r1/table-w64.json",
+      "sha256": "720112d8a0fb1dbfe08d6587442c201277077562235e8b5289170d2e1d867b3b"
+    }
+  },
+  "widths": [
+    64,
+    6,
+    1
+  ]
+}

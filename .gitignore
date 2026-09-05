@@ -15,3 +15,10 @@ inner-loop/blog-notes.md
 research/raw-sglang-2026-09-03/
 research/source-scan-raw-2026-09-03.json
 research/next-run-sources.json
+
+# Campaign-local (schema v2) raw evidence stays local; contracts, fit artifacts, ledger, README are public.
+inner-loop/campaigns/*/runs/
+inner-loop/campaigns/*/detached-*.log
+inner-loop/campaigns/*/launchd-*.out
+inner-loop/campaigns/*/launchd-*.err
+inner-loop/campaigns/*/queue.r0-snapshot/

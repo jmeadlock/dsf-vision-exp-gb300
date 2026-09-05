@@ -8,6 +8,7 @@ ROOT="${ROOT:-/home/milo/dsfv-inner-loop}"
 RUN_DIR="$ROOT/runs/$RUN_ID"
 BIN="$ROOT/bin"
 CONTROL="$ROOT/CONTROL"
+RELEASE="$ROOT/RELEASE"
 LOCK="$ROOT/station.lock"
 STARTED_EPOCH=""
 GATES_CONTAINER=""
@@ -39,9 +40,13 @@ print(c["target"].get("profiler_sha256", "none"))
 print(c["target"].get("sps_module_sha256", "none"))
 print(c["target"].get("runner_sha256", "none"))
 print(c["candidate"].get("num_nextn_predict_layers", "checkpoint"))
+print(c.get("campaign_id", "legacy"))
+print(c["target"].get("profiler_base_file_sha256", "none"))
+print(c["target"].get("profiler_pr37815_patch_sha256", "none"))
+print(c["target"].get("profiler_patched_file_sha256", "none"))
 PY
 )
-if [[ "${#CONTRACT_FIELDS[@]}" -ne 10 ]]; then
+if [[ "${#CONTRACT_FIELDS[@]}" -ne 14 ]]; then
   printf 'BLOCKED invalid contract fields\n' >&2
   exit 2
 fi
@@ -55,10 +60,22 @@ EXPECTED_PROFILER_DIGEST="${CONTRACT_FIELDS[6]}"
 EXPECTED_SPS_MODULE_DIGEST="${CONTRACT_FIELDS[7]}"
 EXPECTED_RUNNER_DIGEST="${CONTRACT_FIELDS[8]}"
 NEXTN_LAYERS="${CONTRACT_FIELDS[9]}"
+CAMPAIGN_ID="${CONTRACT_FIELDS[10]}"
+EXPECTED_PROFILER_BASE_DIGEST="${CONTRACT_FIELDS[11]}"
+EXPECTED_PROFILER_PATCH_DIGEST="${CONTRACT_FIELDS[12]}"
+EXPECTED_PROFILER_PATCHED_DIGEST="${CONTRACT_FIELDS[13]}"
 SPS_ARTIFACT_PATH="$ROOT/artifacts/$EXPECTED_SPS_DIGEST.json"
+PROFILER_HOST_PATH="$ROOT/artifacts/dspark_sps_profiler-pr37815-085a5e2.py"
 
 mkdir -p "$RUN_DIR"
 cp "$CONTRACT" "$RUN_DIR/contract.json"
+if [[ "$CAMPAIGN_ID" != "legacy" ]]; then
+  if [[ ! -r "$RELEASE" || "$(tr -d '[:space:]' < "$RELEASE")" != "$RUN_ID" ]]; then
+    printf 'RELEASE_RESULT BLOCKED run_id=%s\n' "$RUN_ID" | tee "$RUN_DIR/stage.txt"
+    exit 2
+  fi
+  printf 'RELEASE_RESULT PASS run_id=%s\n' "$RUN_ID" >"$RUN_DIR/stage.txt"
+fi
 exec 9>"$LOCK"
 if ! flock -n 9; then
   printf 'BLOCKED another iteration owns %s\n' "$LOCK" | tee "$RUN_DIR/stage.txt"
@@ -230,8 +247,8 @@ capture_common() {
   fi
 }
 
-printf 'RUN_ID=%s\nSTARTED_AT=%s\nCONTAINER=%s\nRAGGED=%s\nSPS=%s\nPROFILE=%s\nNEXTN_LAYERS=%s\n' \
-  "$RUN_ID" "$(date -Is)" "$CONTAINER" "$RAGGED_MODE" "$SPS_MODE" "$PROFILE_MODE" "$NEXTN_LAYERS" >"$RUN_DIR/preflight.txt"
+  printf 'RUN_ID=%s\nSTARTED_AT=%s\nCONTAINER=%s\nRAGGED=%s\nSPS=%s\nPROFILE=%s\nNEXTN_LAYERS=%s\nCAMPAIGN_ID=%s\n' \
+  "$RUN_ID" "$(date -Is)" "$CONTAINER" "$RAGGED_MODE" "$SPS_MODE" "$PROFILE_MODE" "$NEXTN_LAYERS" "$CAMPAIGN_ID" >"$RUN_DIR/preflight.txt"
 if [[ "$EXPECTED_RUNNER_DIGEST" != "none" ]]; then
   ACTUAL_RUNNER_DIGEST="$(sha256sum "$0" | cut -d' ' -f1)"
   if [[ "$ACTUAL_RUNNER_DIGEST" != "$EXPECTED_RUNNER_DIGEST" ]]; then
@@ -265,7 +282,7 @@ if curl -fsS --max-time 3 http://127.0.0.1:30003/v1/models >/dev/null 2>&1; then
 fi
 if [[ "$SPS_MODE" != "none" ]]; then
   case "$SPS_MODE" in
-    current|calibrated) ;;
+    current|calibrated|fine-grained) ;;
     *)
       printf 'BLOCKED unsupported SPS mode=%s\n' "$SPS_MODE" | tee -a "$RUN_DIR/preflight.txt"
       exit 2
@@ -290,6 +307,17 @@ printf 'PREFLIGHT_RESULT PASS\n' | tee -a "$RUN_DIR/preflight.txt"
 export API_KEY="$(</home/milo/.glm_api_key)"
 
 if [[ "$PROFILE_MODE" == "sps" || "$PROFILE_MODE" == "sps-additive" ]]; then
+  if [[ ! -f "$PROFILER_HOST_PATH" ]]; then
+    printf 'BLOCKED missing patched profiler path=%s\n' "$PROFILER_HOST_PATH" | tee -a "$RUN_DIR/preflight.txt"
+    exit 6
+  fi
+  ACTUAL_PROFILER_HOST_DIGEST="$(sha256sum "$PROFILER_HOST_PATH" | cut -d' ' -f1)"
+  if [[ "$ACTUAL_PROFILER_HOST_DIGEST" != "$EXPECTED_PROFILER_DIGEST" ]]; then
+    printf 'BLOCKED host profiler hash mismatch expected=%s actual=%s\n' \
+      "$EXPECTED_PROFILER_DIGEST" "$ACTUAL_PROFILER_HOST_DIGEST" | tee -a "$RUN_DIR/preflight.txt"
+    exit 6
+  fi
+  export PROFILER_HOST_PATH
   printf 'PHASE tier0-correctness\n' | tee -a "$RUN_DIR/stage.txt"
   launch_named "$GATES_CONTAINER" "static" "none" "none" "$RUN_DIR/launch-tier0.txt"
   wait_ready "$GATES_CONTAINER" "$RUN_DIR/models-tier0.json"
@@ -377,6 +405,15 @@ PY
   fi
   printf 'PROFILER_HASH_RESULT PASS sha256=%s\nSPS_MODULE_HASH_RESULT PASS sha256=%s\n' \
     "$ACTUAL_PROFILER_DIGEST" "$ACTUAL_SPS_MODULE_DIGEST" >"$RUN_DIR/profile-hash.txt"
+  if [[ "$EXPECTED_PROFILER_PATCHED_DIGEST" != "none" ]]; then
+    if [[ "$ACTUAL_PROFILER_DIGEST" != "$EXPECTED_PROFILER_PATCHED_DIGEST" ]]; then
+      printf 'BLOCKED patched profiler hash mismatch expected=%s actual=%s\n' \
+        "$EXPECTED_PROFILER_PATCHED_DIGEST" "$ACTUAL_PROFILER_DIGEST" | tee -a "$RUN_DIR/stage.txt"
+      exit 9
+    fi
+    printf 'PROFILER_PATCH_RESULT PASS upstream_pr_head=%s base_sha256=%s patch_sha256=%s result_sha256=%s\n' \
+      "085a5e2a734ae5dc3f820dd50f2f490dbbdcb5e7" "$EXPECTED_PROFILER_BASE_DIGEST" "$EXPECTED_PROFILER_PATCH_DIGEST" "$EXPECTED_PROFILER_PATCHED_DIGEST" >>"$RUN_DIR/profile-hash.txt"
+  fi
   python3 - "$RUN_DIR/server-info.json" "$RUN_DIR/container-inspect.json" "$PROFILE_MODE" >"$RUN_DIR/runtime-mode.txt" <<'PY'
 import json, sys
 info = json.load(open(sys.argv[1]))
@@ -429,150 +466,47 @@ print(
     "sps_profile=true simulate_acc_len=1.0 components=core,step_cpu_time"
 )
 PY
+  # r1 fix: profile runs exit before the shared NextN-override check below, so
+  # the summarizer's nextn_override gate never saw a receipt. Emit it here for
+  # the checkpoint-only profile cards (an override on a profile card is a FAIL).
+  python3 - "$RUN_DIR/server-info.json" "$RUN_DIR/container-inspect.json" "$NEXTN_LAYERS" >>"$RUN_DIR/runtime-mode.txt" <<'PY'
+import json, sys
+info = json.load(open(sys.argv[1]))
+inspect = json.load(open(sys.argv[2]))[0]
+expected = sys.argv[3]
+if expected != "checkpoint":
+    raise SystemExit(f"NEXTN_OVERRIDE_RESULT FAIL profile cards must be checkpoint, got {expected!r}")
+raw_override = info.get("json_model_override_args", "{}")
+effective_override = json.loads(raw_override) if isinstance(raw_override, str) else raw_override
+if effective_override:
+    raise SystemExit(f"NEXTN_OVERRIDE_RESULT FAIL expected checkpoint override={effective_override!r}")
+if "--json-model-override-args" in list(inspect.get("Config", {}).get("Cmd") or []):
+    raise SystemExit("NEXTN_OVERRIDE_RESULT FAIL override flag present for checkpoint mode")
+print("NEXTN_OVERRIDE_RESULT PASS num_nextn_predict_layers=checkpoint")
+PY
   check_control
   printf 'PHASE sps-profile\n' | tee -a "$RUN_DIR/stage.txt"
   PROFILE_EXTRA_ARGS=()
   if [[ "$PROFILE_MODE" == "sps-additive" ]]; then
-    PROFILE_EXTRA_ARGS=(--fracs 0.25 0.5 0.75 1.0)
+    PROFILE_EXTRA_ARGS=(--fracs 0.2 0.4 0.6 0.8 1.0)
   fi
-  docker exec "$CONTAINER" python3 -m sglang.benchmark.dspark_sps_profiler all \
+  docker exec "$CONTAINER" python3 -m sglang.benchmark.dspark_sps_profiler run \
     --base-url http://127.0.0.1:30003 \
-    --batch-size 1 2 4 8 16 24 32 40 48 56 64 \
+    --batch-size 1 2 3 4 5 6 7 8 \
     --input-len 16 --temperature 1.0 \
     --min-steady-steps 32 --min-steady-seconds 10 \
     --round-timeout 180 --repeats 3 \
-    --out /tmp/dsfv-sps-profile.json --max-batch-tokens 384 \
-    "${PROFILE_EXTRA_ARGS[@]}" --no-plot \
+    --out /tmp/dsfv-sps-profile.json \
+    "${PROFILE_EXTRA_ARGS[@]}" \
     2>&1 | tee "$RUN_DIR/profile.txt"
   for name in \
-    dsfv-sps-profile.json \
     dsfv-sps-profile.records.jsonl \
     dsfv-sps-profile.rounds.jsonl \
     dsfv-sps-profile.json.manifest.json; do
     docker cp "$CONTAINER:/tmp/$name" "$RUN_DIR/$name"
   done
-  python3 - "$RUN_DIR" "$PROFILE_MODE" >"$RUN_DIR/profile-gate.txt" <<'PY'
-import json, math, statistics, sys
-from collections import Counter
-from pathlib import Path
+  python3 "$BIN/sps_profile_gate.py" "$RUN_DIR" >"$RUN_DIR/profile-gate.txt"
 
-run = Path(sys.argv[1])
-profile_mode = sys.argv[2]
-table = json.loads((run / "dsfv-sps-profile.json").read_text())
-manifest = json.loads((run / "dsfv-sps-profile.json.manifest.json").read_text())
-rounds = [
-    json.loads(line)
-    for line in (run / "dsfv-sps-profile.rounds.jsonl").read_text().splitlines()
-    if line.strip()
-]
-expected_bs = [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64]
-if manifest.get("batch_size_per_rank_sweep") != expected_bs or manifest.get("repeats") != 3:
-    raise SystemExit("SPS_PROFILE_RESULT FAIL manifest sweep/repeats mismatch")
-if manifest.get("simulate_acc_len") != 1.0 or manifest.get("verify_num_draft_tokens") != 6:
-    raise SystemExit("SPS_PROFILE_RESULT FAIL manifest runtime mismatch")
-if not rounds:
-    raise SystemExit("SPS_PROFILE_RESULT FAIL no rounds")
-min_match = min(float(row.get("match_fraction", 0)) for row in rounds)
-if min_match < 0.9:
-    raise SystemExit("SPS_PROFILE_RESULT FAIL match_fraction below 0.9")
-
-if profile_mode == "sps":
-    expected_tokens = [value * 6 for value in expected_bs]
-    if table.get("sample_batch_tokens") != expected_tokens:
-        raise SystemExit(f"SPS_PROFILE_RESULT FAIL probes={table.get('sample_batch_tokens')!r}")
-    if table.get("max_batch_tokens") != 384:
-        raise SystemExit(f"SPS_PROFILE_RESULT FAIL max_batch_tokens={table.get('max_batch_tokens')!r}")
-    if manifest.get("fracs") is not None:
-        raise SystemExit("SPS_PROFILE_RESULT FAIL diagonal manifest unexpectedly has fracs")
-    if len(rounds) != len(expected_bs) * 3:
-        raise SystemExit(f"SPS_PROFILE_RESULT FAIL rounds={len(rounds)}")
-    print(
-        f"SPS_PROFILE_RESULT PASS kind=diagonal probes={len(expected_tokens)} "
-        f"rounds={len(rounds)} min_match_fraction={min_match:.3f}"
-    )
-    raise SystemExit(0)
-
-if profile_mode != "sps-additive":
-    raise SystemExit(f"SPS_PROFILE_RESULT FAIL unsupported profile_mode={profile_mode!r}")
-
-expected_fracs = [0.25, 0.5, 0.75, 1.0]
-if manifest.get("fracs") != expected_fracs:
-    raise SystemExit(f"SPS_PROFILE_RESULT FAIL fracs={manifest.get('fracs')!r}")
-expected_cells = {
-    (repeat, bs, frac)
-    for repeat in range(3)
-    for bs in expected_bs
-    for frac in expected_fracs
-}
-actual_cells = Counter(
-    (int(row["repeat"]), int(row["batch_size_per_rank"]), float(row["frac"]))
-    for row in rounds
-)
-if set(actual_cells) != expected_cells or any(count != 1 for count in actual_cells.values()):
-    raise SystemExit("SPS_PROFILE_RESULT FAIL additive cell coverage/duplication mismatch")
-expected_table_keys = {
-    "bias_seconds",
-    "bs_probes",
-    "alpha_seconds",
-    "m_probes",
-    "theta_seconds",
-}
-if set(table) != expected_table_keys:
-    raise SystemExit(f"SPS_PROFILE_RESULT FAIL additive table keys={sorted(table)}")
-if table.get("bs_probes") != expected_bs:
-    raise SystemExit(f"SPS_PROFILE_RESULT FAIL bs_probes={table.get('bs_probes')!r}")
-expected_m = sorted(
-    {
-        round((bs + int(frac * bs * 5)) / 64) * 64
-        for bs in expected_bs
-        for frac in expected_fracs
-    }
-)
-if table.get("m_probes") != expected_m:
-    raise SystemExit(f"SPS_PROFILE_RESULT FAIL m_probes={table.get('m_probes')!r}")
-if len(table.get("alpha_seconds", [])) != len(expected_bs):
-    raise SystemExit("SPS_PROFILE_RESULT FAIL alpha length mismatch")
-if len(table.get("theta_seconds", [])) != len(expected_m):
-    raise SystemExit("SPS_PROFILE_RESULT FAIL theta length mismatch")
-values = [
-    float(table["bias_seconds"]),
-    *map(float, table["alpha_seconds"]),
-    *map(float, table["theta_seconds"]),
-]
-if not all(math.isfinite(value) for value in values) or float(table["bias_seconds"]) <= 0:
-    raise SystemExit("SPS_PROFILE_RESULT FAIL non-finite/non-positive table")
-alpha = dict(zip(expected_bs, map(float, table["alpha_seconds"])))
-theta = dict(zip(expected_m, map(float, table["theta_seconds"])))
-observed = []
-predicted = []
-for row in rounds:
-    bs = int(row["batch_size_per_rank"])
-    m = int(row["batch_tokens"])
-    m_bin = round(m / 64) * 64
-    actual = 1.0 / float(row["steps_per_sec"])
-    estimate = float(table["bias_seconds"]) + alpha[bs] + theta[m_bin]
-    if not math.isfinite(estimate) or estimate <= 0:
-        raise SystemExit("SPS_PROFILE_RESULT FAIL non-positive fitted step time")
-    observed.append(actual)
-    predicted.append(estimate)
-relative = sorted(abs(a - p) / a for a, p in zip(observed, predicted))
-p95 = relative[math.ceil(0.95 * len(relative)) - 1]
-max_relative = max(relative)
-mean_observed = statistics.fmean(observed)
-ss_total = sum((value - mean_observed) ** 2 for value in observed)
-ss_residual = sum((a - p) ** 2 for a, p in zip(observed, predicted))
-r2 = 1.0 - ss_residual / ss_total if ss_total > 0 else float("nan")
-if not math.isfinite(r2) or r2 < 0.90 or p95 > 0.15 or max_relative > 0.25:
-    raise SystemExit(
-        f"SPS_PROFILE_RESULT FAIL additive fit r2={r2:.4f} "
-        f"p95_relative={p95:.4f} max_relative={max_relative:.4f}"
-    )
-print(
-    f"SPS_PROFILE_RESULT PASS kind=additive bs_probes={len(expected_bs)} "
-    f"m_probes={len(expected_m)} cells={len(rounds)} min_match_fraction={min_match:.3f} "
-    f"fit_r2={r2:.4f} fit_p95_relative={p95:.4f} fit_max_relative={max_relative:.4f}"
-)
-PY
   check_control
   auth_curl -fsS http://127.0.0.1:30003/v1/models >/dev/null
   printf 'HEALTH_POST_RESULT PASS\n' >>"$RUN_DIR/health.txt"
@@ -637,7 +571,7 @@ elif [[ "$RAGGED_MODE" == "compact" && "$SPS_MODE" == "none" ]] \
   && grep -Fq 'budget degenerates to verify-all' "$RUN_DIR/startup.log"; then
   printf 'RUNTIME_MODE_RESULT PASS mode=compact sps=uninitialized verify_all=true\n' >"$RUN_DIR/runtime-mode.txt"
 elif [[ "$RAGGED_MODE" == "compact" ]] \
-  && [[ "$SPS_MODE" == "current" || "$SPS_MODE" == "calibrated" ]] \
+  && [[ "$SPS_MODE" == "current" || "$SPS_MODE" == "calibrated" || "$SPS_MODE" == "fine-grained" ]] \
   && grep -Fq 'DSpark ragged-verify scheduler enabled (mode=compact' "$RUN_DIR/startup.log" \
   && grep -Fq 'sps_table=/dspark_sps_table.json' "$RUN_DIR/startup.log"; then
   printf 'RUNTIME_MODE_RESULT PASS mode=compact sps=%s verify_all=false\n' "$SPS_MODE" >"$RUN_DIR/runtime-mode.txt"
@@ -724,6 +658,9 @@ BASE_URL=http://127.0.0.1:30003/v1 MODEL=dsf-vision-exp C=64 N=128 OUT="$RUN_DIR
 if ! grep -Fq 'flagged=0' "$RUN_DIR/repaudit.txt"; then
   exit 11
 fi
+check_control
+printf 'PHASE agent-workload\n' | tee -a "$RUN_DIR/stage.txt"
+python3 "$BIN/agent_workload_gate.py" --out "$RUN_DIR/agent-workload.jsonl" | tee "$RUN_DIR/agent-workload.txt"
 check_control
 
 auth_curl -fsS http://127.0.0.1:30003/v1/models >/dev/null
