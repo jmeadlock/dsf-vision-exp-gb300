@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Six sequential tool calls with the complete prior DSML history replayed."""
+"""Six sequential tool calls with per-turn latency receipts."""
+from __future__ import annotations
+
 import json
 import os
 import sys
+import time
 import urllib.request
 import uuid
 
@@ -40,15 +43,23 @@ def chat(messages):
         data=json.dumps(body).encode(),
         headers=HEADERS,
     )
+    t0 = time.monotonic()
     with urllib.request.urlopen(request, timeout=300) as response:
-        return json.load(response)
+        payload = json.load(response)
+    t1 = time.monotonic()
+    # Non-streaming OpenAI-compatible responses do not expose a true token-level
+    # TTFT. Emit wall time as a conservative TTFT receipt for per-turn tracking.
+    payload["_receipt_timing"] = {"ttft_s": round(t1 - t0, 4), "wall_s": round(t1 - t0, 4)}
+    return payload
 
 
 messages = [{"role": "system", "content": "Use the requested tool. Preserve every identifier byte-for-byte."}]
+turn_receipts = []
 for turn in range(6):
     token = f"REPLAY-{turn}-{uuid.uuid4().hex}-Aa9Z"
     messages.append({"role": "user", "content": f"Call record_identifier with exactly this identifier: {token}"})
     response = chat(messages)
+    timing = response.get("_receipt_timing", {"ttft_s": 0.0, "wall_s": 0.0})
     message = response["choices"][0]["message"]
     calls = message.get("tool_calls") or []
     if len(calls) != 1 or calls[0]["function"]["name"] != "record_identifier":
@@ -74,6 +85,12 @@ for turn in range(6):
         assistant,
         {"role": "tool", "tool_call_id": calls[0]["id"], "content": json.dumps({"recorded": token})},
     ])
-    print(f"REPLAY_TURN PASS turn={turn + 1}", flush=True)
+    receipt = {"turn": turn + 1, **timing, "tool_fidelity_ok": True}
+    turn_receipts.append(receipt)
+    print(
+        f"REPLAY_TURN PASS turn={turn + 1} ttft_s={receipt['ttft_s']} wall_s={receipt['wall_s']}",
+        flush=True,
+    )
 
+print("REPLAY_RECEIPTS " + json.dumps(turn_receipts, separators=(",", ":")))
 print("REPLAY_RESULT PASS turns=6")

@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 NAME="${1:?container name}"
 RAGGED_MODE="${2:?static|compact}"
-SPS_MODE="${3:?none|current|calibrated}"
+SPS_MODE="${3:?none|current|calibrated|fine-grained}"
 PROFILE_MODE="${4:-none}"
 NEXTN_LAYERS="${5:-checkpoint}"
 CTX="${CTX:-1048576}"
@@ -23,12 +23,17 @@ case "$RAGGED_MODE" in
 esac
 
 SPS_MOUNTS=()
+PROFILER_MOUNTS=()
 ENV_ARGS=(-e "SGLANG_RAGGED_VERIFY_MODE=$RAGGED_MODE")
 EXTRA_ARGS=(--swa-full-tokens-ratio 0.1)
 MODEL_OVERRIDE_ARGS=()
 case "$SPS_MODE" in
   none) ;;
-  current|calibrated)
+  current|calibrated|fine-grained)
+    if [[ "$SPS_MODE" == "fine-grained" && "$RAGGED_MODE" != "compact" ]]; then
+      printf 'fine-grained SPS requires compact ragged mode; static ragged leaves SPS tables inactive\n' >&2
+      exit 2
+    fi
     if [[ -z "${SPS_TABLE_HOST_PATH:-}" || ! -f "$SPS_TABLE_HOST_PATH" ]]; then
       printf 'missing SPS table host path for mode %s\n' "$SPS_MODE" >&2
       exit 2
@@ -53,6 +58,11 @@ case "$PROFILE_MODE" in
     ;;
   sps|sps-additive)
     HOST=127.0.0.1
+    if [[ -z "${PROFILER_HOST_PATH:-}" || ! -f "$PROFILER_HOST_PATH" ]]; then
+      printf 'missing patched profiler host path for profile mode %s\n' "$PROFILE_MODE" >&2
+      exit 2
+    fi
+    PROFILER_MOUNTS=(-v "$PROFILER_HOST_PATH":/sgl-workspace/sglang/python/sglang/benchmark/dspark_sps_profiler.py:ro)
     ENV_ARGS+=(
       -e SGLANG_DSPARK_ENABLE_SPS_RECORD=1
       -e SGLANG_SIMULATE_ACC_LEN=1.0
@@ -71,6 +81,7 @@ docker run -d --name "$NAME" --gpus all --ipc host --network host \
   "${ENV_ARGS[@]}" \
   -v "$MODEL":/model:ro \
   "${SPS_MOUNTS[@]}" \
+  "${PROFILER_MOUNTS[@]}" \
   -v /home/milo/ds4f-vision-exp/patches/encoding_dsv4.py:/sgl-workspace/sglang/python/sglang/srt/entrypoints/openai/encoding_dsv4.py:ro \
   -v "$CACHE/root-cache":/root/.cache \
   -v "$CACHE/tilelang":/root/.tilelang \

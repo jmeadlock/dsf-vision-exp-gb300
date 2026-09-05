@@ -1,120 +1,108 @@
 #!/usr/bin/env python3
-"""Exercise the runner's embedded SPS artifact gate."""
+"""Tests for standalone SPS profile and held-out selection gates."""
 from __future__ import annotations
 
 import json
 import math
-import re
-import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-
-INNER_LOOP = Path(__file__).resolve().parents[1]
-RUNNER = INNER_LOOP / "scripts" / "run_remote_candidate.sh"
-RUNS = INNER_LOOP / "runs"
-MARKER = (
-    '  python3 - "$RUN_DIR" "$PROFILE_MODE" '
-    '>"$RUN_DIR/profile-gate.txt" <<\'PY\''
+from sps_profile_gate import (
+    ProfileGateError,
+    gate_profile_run,
+    select_held_out_width,
 )
 
 
-def embedded_program() -> str:
-    source = RUNNER.read_text()
-    pattern = re.compile(re.escape(MARKER) + r"\n(?P<program>.*?)\nPY", re.DOTALL)
-    match = pattern.search(source)
-    if not match:
-        raise AssertionError("embedded SPS profile gate not found")
-    return match.group("program")
+EXPECTED_BS = [1, 2, 3, 4, 5, 6, 7, 8]
+EXPECTED_FRACS = [0.2, 0.4, 0.6, 0.8, 1.0]
+EXPECTED_WIDTHS = [64, 6, 1]
 
 
-def run_gate(run: Path, mode: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, "-", str(run), mode],
-        input=embedded_program(),
-        text=True,
-        capture_output=True,
-        timeout=10,
-        check=False,
+def write_profile_run(run: Path, *, drop_last: bool = False, duplicate_first: bool = False) -> None:
+    rows = []
+    for repeat in range(3):
+        for bs in EXPECTED_BS:
+            for frac in EXPECTED_FRACS:
+                rows.append({
+                    "repeat": repeat,
+                    "batch_size_per_rank": bs,
+                    "frac": frac,
+                    "batch_tokens": bs + int(frac * bs * 5),
+                    "steps_per_sec": 1000.0 / (1 + bs + frac),
+                    "match_fraction": 1.0,
+                })
+    if drop_last:
+        rows = rows[:-1]
+    if duplicate_first:
+        rows.append(dict(rows[0]))
+    table = {
+        "bias_seconds": 0.001,
+        "bs_probes": EXPECTED_BS,
+        "alpha_seconds": [0.0001 * bs for bs in EXPECTED_BS],
+        "m_probes": list(range(2, 49)),
+        "theta_seconds": [0.00001 * m for m in range(2, 49)],
+    }
+    manifest = {
+        "batch_size_per_rank_sweep": EXPECTED_BS,
+        "fracs": EXPECTED_FRACS,
+        "repeats": 3,
+        "simulate_acc_len": 1.0,
+        "verify_num_draft_tokens": 6,
+        "settings": {
+            "input_len": 16,
+            "temperature": 1.0,
+            "min_steady_steps": 32,
+            "min_steady_seconds": 10.0,
+        },
+    }
+    (run / "dsfv-sps-profile.json.manifest.json").write_text(json.dumps(manifest))
+    (run / "dsfv-sps-profile.rounds.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in rows)
     )
 
 
 class SpsProfileGateTests(unittest.TestCase):
-    def test_existing_diagonal_artifact_still_passes(self) -> None:
-        run = RUNS / "008-sps-profile-static-20260904T033459Z"
-        completed = run_gate(run, "sps")
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("SPS_PROFILE_RESULT PASS kind=diagonal", completed.stdout)
-
-    def test_additive_gate_requires_exact_cells_and_good_fit(self) -> None:
-        expected_bs = [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64]
-        fracs = [0.25, 0.5, 0.75, 1.0]
-        expected_m = sorted(
-            {
-                round((bs + int(frac * bs * 5)) / 64) * 64
-                for bs in expected_bs
-                for frac in fracs
-            }
-        )
-        bias = 0.001
-        alpha = {bs: (bs - 1) * 0.00001 for bs in expected_bs}
-        theta = {m: index * 0.0001 for index, m in enumerate(expected_m)}
-        rounds = []
-        for repeat in range(3):
-            for bs in expected_bs:
-                for frac in fracs:
-                    batch_tokens = bs + int(frac * bs * 5)
-                    m_bin = round(batch_tokens / 64) * 64
-                    step_time = bias + alpha[bs] + theta[m_bin]
-                    rounds.append(
-                        {
-                            "repeat": repeat,
-                            "batch_size_per_rank": bs,
-                            "frac": frac,
-                            "batch_tokens": batch_tokens,
-                            "steps_per_sec": 1.0 / step_time,
-                            "match_fraction": 1.0,
-                        }
-                    )
-        table = {
-            "bias_seconds": bias,
-            "bs_probes": expected_bs,
-            "alpha_seconds": [alpha[bs] for bs in expected_bs],
-            "m_probes": expected_m,
-            "theta_seconds": [theta[m] for m in expected_m],
-        }
-        manifest = {
-            "batch_size_per_rank_sweep": expected_bs,
-            "fracs": fracs,
-            "repeats": 3,
-            "simulate_acc_len": 1.0,
-            "verify_num_draft_tokens": 6,
-        }
-
+    def test_profile_gate_requires_corrected_deterministic_sweep_and_m_range(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             run = Path(td)
-            (run / "dsfv-sps-profile.json").write_text(json.dumps(table))
-            (run / "dsfv-sps-profile.json.manifest.json").write_text(
-                json.dumps(manifest)
-            )
-            rounds_path = run / "dsfv-sps-profile.rounds.jsonl"
-            rounds_path.write_text(
-                "".join(json.dumps(row) + "\n" for row in rounds)
-            )
+            write_profile_run(run)
+            result = gate_profile_run(run)
+        self.assertEqual(result["cells"], 120)
+        self.assertEqual(result["batch_size_per_rank"], EXPECTED_BS)
+        self.assertEqual(result["fracs"], EXPECTED_FRACS)
+        self.assertEqual(result["m_min"], 2)
+        self.assertEqual(result["m_max"], 48)
+        self.assertEqual(result["fit_mbin_widths"], EXPECTED_WIDTHS)
 
-            completed = run_gate(run, "sps-additive")
-            self.assertEqual(completed.returncode, 0, completed.stderr)
-            self.assertIn("SPS_PROFILE_RESULT PASS kind=additive", completed.stdout)
-            self.assertIn("cells=132", completed.stdout)
+    def test_profile_gate_rejects_missing_or_duplicate_sweep_cells(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_profile_run(run, drop_last=True)
+            with self.assertRaisesRegex(ProfileGateError, "coverage"):
+                gate_profile_run(run)
+        with tempfile.TemporaryDirectory() as td:
+            run = Path(td)
+            write_profile_run(run, duplicate_first=True)
+            with self.assertRaisesRegex(ProfileGateError, "coverage"):
+                gate_profile_run(run)
 
-            rounds_path.write_text(
-                "".join(json.dumps(row) + "\n" for row in rounds[:-1])
-            )
-            rejected = run_gate(run, "sps-additive")
-            self.assertNotEqual(rejected.returncode, 0)
-            self.assertIn("cell coverage/duplication mismatch", rejected.stderr)
+    def test_held_out_selection_requires_widths_and_improvement_gates(self) -> None:
+        metrics = {
+            "64": {"mae_ms": 1.0, "rmse_ms": 1.5, "max_error_ms": 3.0, "mean_bias_ms": 0.3},
+            "6": {"mae_ms": 0.42, "rmse_ms": 1.2, "max_error_ms": 2.5, "mean_bias_ms": 0.1},
+            "1": {"mae_ms": 0.41, "rmse_ms": 1.1, "max_error_ms": 2.4, "mean_bias_ms": 0.2},
+        }
+        selected = select_held_out_width(metrics, noise_mae_ms=0.05)
+        self.assertEqual(selected["selected_mbin_w"], 6)
+        self.assertEqual(selected["reason"], "width_1_and_6_tied_inside_noise_choose_6")
+
+        failing = dict(metrics)
+        failing["6"] = {"mae_ms": 0.8, "rmse_ms": 1.0, "max_error_ms": 2.0, "mean_bias_ms": 0.1}
+        failing["1"] = {"mae_ms": 0.75, "rmse_ms": 1.0, "max_error_ms": 2.0, "mean_bias_ms": 0.1}
+        with self.assertRaisesRegex(ProfileGateError, "50%"):
+            select_held_out_width(failing)
 
 
 if __name__ == "__main__":
